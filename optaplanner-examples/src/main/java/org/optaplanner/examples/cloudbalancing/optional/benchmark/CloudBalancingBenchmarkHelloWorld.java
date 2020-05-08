@@ -31,14 +31,15 @@ import org.optaplanner.examples.cloudbalancing.persistence.CloudBalancingGenerat
 public class CloudBalancingBenchmarkHelloWorld {
 
     public static void main(String[] args) {
-        List<String> argList = Arrays.asList(args);
-        boolean advanced = argList.contains("--advanced");
-        if (!advanced) {
-            runBasicBenchmark();
-        } else {
-            boolean aggregator = argList.contains("--aggregator");
-            runAdvancedBenchmark(aggregator);
-        }
+//        List<String> argList = Arrays.asList(args);
+//        boolean advanced = argList.contains("--advanced");
+//        if (!advanced) {
+//            runBasicBenchmark();
+//        } else {
+//            boolean aggregator = argList.contains("--aggregator");
+//            runAdvancedBenchmark(aggregator);
+    	      runAdvancedBenchmark(true);
+//        }
     }
 
     /**

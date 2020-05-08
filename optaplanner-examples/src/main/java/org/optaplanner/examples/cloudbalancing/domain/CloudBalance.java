@@ -34,10 +34,13 @@ import com.thoughtworks.xstream.annotations.XStreamConverter;
 @XStreamAlias("CloudBalance")
 public class CloudBalance extends AbstractPersistable {
 
+	//problem facts
     private List<CloudComputer> computerList;
 
+    //planning entities
     private List<CloudProcess> processList;
-
+    
+    //score
     @XStreamConverter(HardSoftScoreXStreamConverter.class)
     private HardSoftScore score;
 
