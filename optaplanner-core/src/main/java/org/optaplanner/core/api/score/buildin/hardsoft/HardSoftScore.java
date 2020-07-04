@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.optaplanner.core.api.score.buildin.hardsoft;
 import java.util.Objects;
 
 import org.optaplanner.core.api.score.AbstractScore;
-import org.optaplanner.core.api.score.FeasibilityScore;
 import org.optaplanner.core.api.score.Score;
 
 /**
@@ -31,7 +30,7 @@ import org.optaplanner.core.api.score.Score;
  *
  * @see Score
  */
-public final class HardSoftScore extends AbstractScore<HardSoftScore> implements FeasibilityScore<HardSoftScore> {
+public final class HardSoftScore extends AbstractScore<HardSoftScore> {
 
     public static final HardSoftScore ZERO = new HardSoftScore(0, 0, 0);
     public static final HardSoftScore ONE_HARD = new HardSoftScore(0, 1, 0);
@@ -51,23 +50,7 @@ public final class HardSoftScore extends AbstractScore<HardSoftScore> implements
         return new HardSoftScore(initScore, hardScore, softScore);
     }
 
-    /**
-     * @deprecated in favor of {@link #ofUninitialized(int, int, int)}
-     */
-    @Deprecated
-    public static HardSoftScore valueOfUninitialized(int initScore, int hardScore, int softScore) {
-        return new HardSoftScore(initScore, hardScore, softScore);
-    }
-
     public static HardSoftScore of(int hardScore, int softScore) {
-        return new HardSoftScore(0, hardScore, softScore);
-    }
-
-    /**
-     * @deprecated in favor of {@link #of(int, int)}
-     */
-    @Deprecated
-    public static HardSoftScore valueOf(int hardScore, int softScore) {
         return new HardSoftScore(0, hardScore, softScore);
     }
 
@@ -133,13 +116,7 @@ public final class HardSoftScore extends AbstractScore<HardSoftScore> implements
     // ************************************************************************
 
     @Override
-    public HardSoftScore toInitializedScore() {
-        return initScore == 0 ? this : new HardSoftScore(0, hardScore, softScore);
-    }
-
-    @Override
     public HardSoftScore withInitScore(int newInitScore) {
-        assertNoInitScore();
         return new HardSoftScore(newInitScore, hardScore, softScore);
     }
 
@@ -230,17 +207,12 @@ public final class HardSoftScore extends AbstractScore<HardSoftScore> implements
 
     @Override
     public String toShortString() {
-        return buildShortString((n) -> ((Integer) n).intValue() != 0, HARD_LABEL, SOFT_LABEL);
+        return buildShortString((n) -> n.intValue() != 0, HARD_LABEL, SOFT_LABEL);
     }
 
     @Override
     public String toString() {
         return getInitPrefix() + hardScore + HARD_LABEL + "/" + softScore + SOFT_LABEL;
-    }
-
-    @Override
-    public boolean isCompatibleArithmeticArgument(Score otherScore) {
-        return otherScore instanceof HardSoftScore;
     }
 
 }

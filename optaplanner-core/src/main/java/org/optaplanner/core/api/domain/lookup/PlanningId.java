@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import org.optaplanner.core.api.domain.entity.PlanningEntity;
-import org.optaplanner.core.api.domain.solution.drools.ProblemFactCollectionProperty;
+import org.optaplanner.core.api.domain.solution.ProblemFactCollectionProperty;
 import org.optaplanner.core.api.domain.valuerange.ValueRangeProvider;
+import org.optaplanner.core.api.score.director.ScoreDirector;
+import org.optaplanner.core.api.solver.ProblemFactChange;
 import org.optaplanner.core.impl.heuristic.move.Move;
-import org.optaplanner.core.impl.score.director.ScoreDirector;
-import org.optaplanner.core.impl.solver.ProblemFactChange;
 
 /**
  * Specifies that a bean property (or a field) is the id to match
@@ -39,8 +39,9 @@ import org.optaplanner.core.impl.solver.ProblemFactChange;
  * It is specified on a getter of a java bean property (or directly on a field) of a {@link PlanningEntity} class,
  * {@link ValueRangeProvider planning value} class or any {@link ProblemFactCollectionProperty problem fact} class.
  * <p>
- * The return type can be any type which overrides {@link Object#equals(Object)} and {@link Object#hashCode()},
- * but is usually {@link Long} or {@link String}. It must never return a null instance.
+ * The return type can be any {@link Comparable} type which overrides {@link Object#equals(Object)} and
+ * {@link Object#hashCode()}, and is usually {@link Long} or {@link String}.
+ * It must never return a null instance.
  */
 @Target({ METHOD, FIELD })
 @Retention(RUNTIME)

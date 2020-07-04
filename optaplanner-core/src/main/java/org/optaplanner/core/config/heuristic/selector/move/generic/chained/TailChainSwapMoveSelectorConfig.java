@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,15 @@
 
 package org.optaplanner.core.config.heuristic.selector.move.generic.chained;
 
-import org.optaplanner.core.config.heuristic.policy.HeuristicConfigPolicy;
+import javax.xml.bind.annotation.XmlElement;
+
 import org.optaplanner.core.config.heuristic.selector.common.SelectionCacheType;
 import org.optaplanner.core.config.heuristic.selector.common.SelectionOrder;
 import org.optaplanner.core.config.heuristic.selector.entity.EntitySelectorConfig;
 import org.optaplanner.core.config.heuristic.selector.move.MoveSelectorConfig;
 import org.optaplanner.core.config.heuristic.selector.value.ValueSelectorConfig;
 import org.optaplanner.core.config.util.ConfigUtils;
+import org.optaplanner.core.impl.heuristic.HeuristicConfigPolicy;
 import org.optaplanner.core.impl.heuristic.selector.entity.EntitySelector;
 import org.optaplanner.core.impl.heuristic.selector.move.MoveSelector;
 import org.optaplanner.core.impl.heuristic.selector.move.generic.chained.TailChainSwapMoveSelector;
@@ -36,6 +38,9 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 @XStreamAlias("tailChainSwapMoveSelector")
 public class TailChainSwapMoveSelectorConfig extends MoveSelectorConfig<TailChainSwapMoveSelectorConfig> {
 
+    public static final String XML_ELEMENT_NAME = "tailChainSwapMoveSelector";
+
+    @XmlElement(name = "entitySelector")
     @XStreamAlias("entitySelector")
     private EntitySelectorConfig entitySelectorConfig = null;
     /**
@@ -43,6 +48,7 @@ public class TailChainSwapMoveSelectorConfig extends MoveSelectorConfig<TailChai
      * the secondary entity might not exist if the value is a buoy (= the last entity in a chain)
      * and also because with nearby selection, it's more important that the value is near (instead of the secondary entity).
      */
+    @XmlElement(name = "valueSelector")
     @XStreamAlias("valueSelector")
     private ValueSelectorConfig valueSelectorConfig = null;
 

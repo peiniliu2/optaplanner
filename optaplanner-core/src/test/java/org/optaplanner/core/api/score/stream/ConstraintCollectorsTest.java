@@ -24,7 +24,7 @@ import static java.util.Collections.emptySortedMap;
 import static java.util.Collections.emptySortedSet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.optaplanner.core.api.score.stream.ConstraintCollectors.countLongBi;
 import static org.optaplanner.core.api.score.stream.ConstraintCollectors.countLongQuad;
 import static org.optaplanner.core.api.score.stream.ConstraintCollectors.countLongTri;
@@ -302,7 +302,7 @@ public class ConstraintCollectorsTest {
 
     @Test
     public void countDistinct() {
-        UniConstraintCollector<Integer, ?, Integer> collector = ConstraintCollectors.countDistinct(Function.identity());
+        UniConstraintCollector<Integer, ?, Integer> collector = ConstraintCollectors.countDistinct();
         Object container = collector.supplier().get();
         // Add first value, we have one now.
         int firstValue = 2;
@@ -2236,8 +2236,8 @@ public class ConstraintCollectorsTest {
 
     @Test
     public void toMapQuad() {
-        QuadConstraintCollector<Integer, Integer, Integer, Integer, ?, Map<Integer, Set<Integer>>> collector = ConstraintCollectors
-                .toMap((a, b, c, d) -> a + b + c + d, (a, b, c, d) -> a + b + c + d);
+        QuadConstraintCollector<Integer, Integer, Integer, Integer, ?, Map<Integer, Set<Integer>>> collector =
+                ConstraintCollectors.toMap((a, b, c, d) -> a + b + c + d, (a, b, c, d) -> a + b + c + d);
         Object container = collector.supplier().get();
 
         assertResult(collector, container, emptyMap());
@@ -2468,8 +2468,8 @@ public class ConstraintCollectorsTest {
 
     @Test
     public void toSortedMapQuad() {
-        QuadConstraintCollector<Integer, Integer, Integer, Integer, ?, SortedMap<Integer, Set<Integer>>> collector = ConstraintCollectors
-                .toSortedMap((a, b, c, d) -> a + b + c + d, (a, b, c, d) -> a + b + c + d);
+        QuadConstraintCollector<Integer, Integer, Integer, Integer, ?, SortedMap<Integer, Set<Integer>>> collector =
+                ConstraintCollectors.toSortedMap((a, b, c, d) -> a + b + c + d, (a, b, c, d) -> a + b + c + d);
         Object container = collector.supplier().get();
 
         assertResult(collector, container, emptySortedMap());
@@ -2497,8 +2497,8 @@ public class ConstraintCollectorsTest {
 
     @Test
     public void toSortedMapQuadMerged() {
-        QuadConstraintCollector<Integer, Integer, Integer, Integer, ?, SortedMap<Integer, Integer>> collector = ConstraintCollectors
-                .toSortedMap((a, b, c, d) -> a + b + c + d, (a, b, c, d) -> a + b + c + d, Integer::sum);
+        QuadConstraintCollector<Integer, Integer, Integer, Integer, ?, SortedMap<Integer, Integer>> collector =
+                ConstraintCollectors.toSortedMap((a, b, c, d) -> a + b + c + d, (a, b, c, d) -> a + b + c + d, Integer::sum);
         Object container = collector.supplier().get();
 
         assertResult(collector, container, emptySortedMap());
@@ -2546,25 +2546,33 @@ public class ConstraintCollectorsTest {
     private static <A, B, C> void assertResult(QuadConstraintCollector<A, A, A, A, B, C> collector, Object container,
             C expectedResult) {
         C actualResult = collector.finisher().apply((B) container);
-        assertEquals("Collector (" + collector + ") did not produce expected result.", expectedResult, actualResult);
+        assertThat(actualResult)
+                .as("Collector (" + collector + ") did not produce expected result.")
+                .isEqualTo(expectedResult);
     }
 
     private static <A, B, C> void assertResult(TriConstraintCollector<A, A, A, B, C> collector, Object container,
             C expectedResult) {
         C actualResult = collector.finisher().apply((B) container);
-        assertEquals("Collector (" + collector + ") did not produce expected result.", expectedResult, actualResult);
+        assertThat(actualResult)
+                .as("Collector (" + collector + ") did not produce expected result.")
+                .isEqualTo(expectedResult);
     }
 
     private static <A, B, C> void assertResult(BiConstraintCollector<A, A, B, C> collector, Object container,
             C expectedResult) {
         C actualResult = collector.finisher().apply((B) container);
-        assertEquals("Collector (" + collector + ") did not produce expected result.", expectedResult, actualResult);
+        assertThat(actualResult)
+                .as("Collector (" + collector + ") did not produce expected result.")
+                .isEqualTo(expectedResult);
     }
 
     private static <A, B, C> void assertResult(UniConstraintCollector<A, B, C> collector, Object container,
             C expectedResult) {
         C actualResult = collector.finisher().apply((B) container);
-        assertEquals("Collector (" + collector + ") did not produce expected result.", expectedResult, actualResult);
+        assertThat(actualResult)
+                .as("Collector (" + collector + ") did not produce expected result.")
+                .isEqualTo(expectedResult);
     }
 
 }

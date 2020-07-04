@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,22 @@
 
 package org.optaplanner.core.impl.score.director.incremental;
 
-import java.util.Collection;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.optaplanner.core.api.domain.solution.PlanningSolution;
 import org.optaplanner.core.api.score.Score;
 import org.optaplanner.core.api.score.constraint.ConstraintMatch;
 import org.optaplanner.core.api.score.constraint.ConstraintMatchTotal;
 import org.optaplanner.core.api.score.constraint.Indictment;
+import org.optaplanner.core.api.score.director.ScoreDirector;
 import org.optaplanner.core.impl.domain.entity.descriptor.EntityDescriptor;
 import org.optaplanner.core.impl.domain.variable.descriptor.VariableDescriptor;
+import org.optaplanner.core.impl.score.constraint.DefaultIndictment;
 import org.optaplanner.core.impl.score.director.AbstractScoreDirector;
-import org.optaplanner.core.impl.score.director.ScoreDirector;
 
 /**
  * Incremental java implementation of {@link ScoreDirector}, which only recalculates the {@link Score}
@@ -78,6 +79,11 @@ public class IncrementalScoreDirector<Solution_>
         if (score == null) {
             throw new IllegalStateException("The incrementalScoreCalculator (" + incrementalScoreCalculator.getClass()
                     + ") must return a non-null score (" + score + ") in the method calculateScore().");
+        } else if (!score.isSolutionInitialized()) {
+            throw new IllegalStateException("The score (" + this + ")'s initScore (" + score.getInitScore()
+                    + ") should be 0.\n"
+                    + "Maybe the score calculator (" + incrementalScoreCalculator.getClass() + ") is calculating "
+                    + "the initScore too, although it's the score director's responsibility.");
         }
         if (workingInitScore != 0) {
             score = score.withInitScore(workingInitScore);
@@ -93,20 +99,16 @@ public class IncrementalScoreDirector<Solution_>
     }
 
     @Override
-    public Collection<ConstraintMatchTotal> getConstraintMatchTotals() {
+    public Map<String, ConstraintMatchTotal> getConstraintMatchTotalMap() {
         if (!isConstraintMatchEnabled()) {
             throw new IllegalStateException("When constraintMatchEnabled (" + isConstraintMatchEnabled()
                     + ") is disabled in the constructor, this method should not be called.");
         }
         // Notice that we don't trigger the variable listeners
         return ((ConstraintMatchAwareIncrementalScoreCalculator<Solution_>) incrementalScoreCalculator)
-                .getConstraintMatchTotals();
-    }
-
-    @Override
-    public Map<String, ConstraintMatchTotal> getConstraintMatchTotalMap() {
-        return getConstraintMatchTotals().stream()
-                .collect(Collectors.toMap(ConstraintMatchTotal::getConstraintId, Function.identity()));
+                .getConstraintMatchTotals()
+                .stream()
+                .collect(toMap(ConstraintMatchTotal::getConstraintId, identity()));
     }
 
     @Override
@@ -115,20 +117,20 @@ public class IncrementalScoreDirector<Solution_>
             throw new IllegalStateException("When constraintMatchEnabled (" + isConstraintMatchEnabled()
                     + ") is disabled in the constructor, this method should not be called.");
         }
-        Map<Object, Indictment> incrementalIndictmentMap = ((ConstraintMatchAwareIncrementalScoreCalculator<Solution_>) incrementalScoreCalculator)
-                .getIndictmentMap();
+        Map<Object, Indictment> incrementalIndictmentMap =
+                ((ConstraintMatchAwareIncrementalScoreCalculator<Solution_>) incrementalScoreCalculator).getIndictmentMap();
         if (incrementalIndictmentMap != null) {
             return incrementalIndictmentMap;
         }
         Map<Object, Indictment> indictmentMap = new LinkedHashMap<>(); // TODO use entitySize
         Score zeroScore = getScoreDefinition().getZeroScore();
-        for (ConstraintMatchTotal constraintMatchTotal : getConstraintMatchTotals()) {
+        for (ConstraintMatchTotal constraintMatchTotal : getConstraintMatchTotalMap().values()) {
             for (ConstraintMatch constraintMatch : constraintMatchTotal.getConstraintMatchSet()) {
                 constraintMatch.getJustificationList().stream()
                         .distinct() // One match might have the same justification twice
                         .forEach(justification -> {
-                            Indictment indictment = indictmentMap.computeIfAbsent(justification,
-                                    k -> new Indictment(justification, zeroScore));
+                            DefaultIndictment indictment = (DefaultIndictment) indictmentMap.computeIfAbsent(justification,
+                                    k -> new DefaultIndictment(justification, zeroScore));
                             indictment.addConstraintMatch(constraintMatch);
                         });
             }

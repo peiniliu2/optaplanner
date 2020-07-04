@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.optaplanner.core.impl.phase.scope.AbstractStepScope;
 import org.optaplanner.core.impl.score.director.InnerScoreDirector;
 import org.optaplanner.core.impl.solver.DefaultSolver;
 import org.optaplanner.core.impl.solver.recaller.BestSolutionRecaller;
-import org.optaplanner.core.impl.solver.scope.DefaultSolverScope;
+import org.optaplanner.core.impl.solver.scope.SolverScope;
 import org.optaplanner.core.impl.solver.termination.Termination;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +110,7 @@ public abstract class AbstractPhase<Solution_> implements Phase<Solution_> {
     // ************************************************************************
 
     @Override
-    public void solvingStarted(DefaultSolverScope<Solution_> solverScope) {
+    public void solvingStarted(SolverScope<Solution_> solverScope) {
         // bestSolutionRecaller.solvingStarted(...) is called by DefaultSolver
         // solverPhaseLifecycleSupport.solvingStarted(...) is called by DefaultSolver
         termination.solvingStarted(solverScope);
@@ -118,7 +118,7 @@ public abstract class AbstractPhase<Solution_> implements Phase<Solution_> {
     }
 
     @Override
-    public void solvingEnded(DefaultSolverScope<Solution_> solverScope) {
+    public void solvingEnded(SolverScope<Solution_> solverScope) {
         // bestSolutionRecaller.solvingEnded(...) is called by DefaultSolver
         // solverPhaseLifecycleSupport.solvingEnded(...) is called by DefaultSolver
         termination.solvingEnded(solverScope);
@@ -209,7 +209,7 @@ public abstract class AbstractPhase<Solution_> implements Phase<Solution_> {
                 Object entity = it.next();
                 EntityDescriptor<Solution_> entityDescriptor = solutionDescriptor.findEntityDescriptorOrFail(
                         entity.getClass());
-                if (!entityDescriptor.isEntityInitializedOrImmovable(scoreDirector, entity)) {
+                if (!entityDescriptor.isEntityInitializedOrPinned(scoreDirector, entity)) {
                     String variableRef = null;
                     for (GenuineVariableDescriptor<Solution_> variableDescriptor : entityDescriptor
                             .getGenuineVariableDescriptors()) {

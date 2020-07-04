@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.stream.LongStream;
 
 import org.optaplanner.core.api.score.buildin.bendablelong.BendableLongScore;
-import org.optaplanner.core.api.score.buildin.bendablelong.BendableLongScoreHolder;
 import org.optaplanner.core.config.score.trend.InitializingScoreTrendLevel;
 import org.optaplanner.core.impl.score.definition.AbstractBendableScoreDefinition;
 import org.optaplanner.core.impl.score.trend.InitializingScoreTrend;
@@ -109,8 +108,8 @@ public class BendableLongScoreDefinition extends AbstractBendableScoreDefinition
     }
 
     @Override
-    public BendableLongScoreHolder buildScoreHolder(boolean constraintMatchEnabled) {
-        return new BendableLongScoreHolder(constraintMatchEnabled, hardLevelsSize, softLevelsSize);
+    public BendableLongScoreHolderImpl buildScoreHolder(boolean constraintMatchEnabled) {
+        return new BendableLongScoreHolderImpl(constraintMatchEnabled, hardLevelsSize, softLevelsSize);
     }
 
     @Override

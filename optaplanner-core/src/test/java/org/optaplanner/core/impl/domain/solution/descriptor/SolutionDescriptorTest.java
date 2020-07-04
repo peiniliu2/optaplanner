@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package org.optaplanner.core.impl.domain.solution.descriptor;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.optaplanner.core.impl.testdata.util.PlannerAssert.assertAllCodesOfCollection;
-import static org.optaplanner.core.impl.testdata.util.PlannerAssert.assertEquals;
-import static org.optaplanner.core.impl.testdata.util.PlannerAssert.assertMapContainsKeysExactly;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,9 +32,6 @@ import org.optaplanner.core.impl.testdata.domain.collection.TestdataArrayBasedSo
 import org.optaplanner.core.impl.testdata.domain.collection.TestdataSetBasedSolution;
 import org.optaplanner.core.impl.testdata.domain.extended.TestdataAnnotatedExtendedSolution;
 import org.optaplanner.core.impl.testdata.domain.extended.TestdataUnannotatedExtendedEntity;
-import org.optaplanner.core.impl.testdata.domain.extended.abstractsolution.TestdataExtendedAbstractSolution;
-import org.optaplanner.core.impl.testdata.domain.extended.abstractsolution.TestdataScoreGetterOverrideExtendedAbstractSolution;
-import org.optaplanner.core.impl.testdata.domain.extended.legacysolution.TestdataLegacySolution;
 import org.optaplanner.core.impl.testdata.domain.reflect.generic.TestdataGenericEntity;
 import org.optaplanner.core.impl.testdata.domain.reflect.generic.TestdataGenericSolution;
 import org.optaplanner.core.impl.testdata.domain.solutionproperties.TestdataNoProblemFactPropertySolution;
@@ -67,19 +63,18 @@ public class SolutionDescriptorTest {
     public void problemFactProperty() {
         SolutionDescriptor<TestdataProblemFactPropertySolution> solutionDescriptor = TestdataProblemFactPropertySolution
                 .buildSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap(),
-                "extraObject");
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "valueList", "otherProblemFactList");
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys("extraObject");
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("valueList",
+                "otherProblemFactList");
     }
 
     @Test
     public void readMethodProblemFactCollectionProperty() {
-        SolutionDescriptor<TestdataReadMethodProblemFactCollectionPropertySolution> solutionDescriptor = TestdataReadMethodProblemFactCollectionPropertySolution
-                .buildSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "valueList", "createProblemFacts");
+        SolutionDescriptor<TestdataReadMethodProblemFactCollectionPropertySolution> solutionDescriptor =
+                TestdataReadMethodProblemFactCollectionPropertySolution.buildSolutionDescriptor();
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys();
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("valueList",
+                "createProblemFacts");
     }
 
     @Test
@@ -131,93 +126,42 @@ public class SolutionDescriptorTest {
     public void extended() {
         SolutionDescriptor<TestdataAnnotatedExtendedSolution> solutionDescriptor = TestdataAnnotatedExtendedSolution
                 .buildExtendedSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "valueList", "subValueList");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entityList", "subEntityList");
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys();
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("valueList",
+                "subValueList");
+        assertThat(solutionDescriptor.getEntityMemberAccessorMap()).containsOnlyKeys();
+        assertThat(solutionDescriptor.getEntityCollectionMemberAccessorMap()).containsOnlyKeys("entityList", "subEntityList");
     }
 
     @Test
     public void setProperties() {
         SolutionDescriptor<TestdataSetBasedSolution> solutionDescriptor = TestdataSetBasedSolution.buildSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "valueSet");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entitySet");
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys();
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("valueSet");
+        assertThat(solutionDescriptor.getEntityMemberAccessorMap()).containsOnlyKeys();
+        assertThat(solutionDescriptor.getEntityCollectionMemberAccessorMap()).containsOnlyKeys("entitySet");
     }
 
     @Test
     public void arrayProperties() {
         SolutionDescriptor<TestdataArrayBasedSolution> solutionDescriptor = TestdataArrayBasedSolution
                 .buildSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "values");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entities");
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys();
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("values");
+        assertThat(solutionDescriptor.getEntityMemberAccessorMap()).containsOnlyKeys();
+        assertThat(solutionDescriptor.getEntityCollectionMemberAccessorMap()).containsOnlyKeys("entities");
     }
 
     @Test
     public void generic() {
         SolutionDescriptor<TestdataGenericSolution> solutionDescriptor = TestdataGenericSolution.buildSolutionDescriptor();
 
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(), "valueList",
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("valueList",
                 "complexGenericValueList", "subTypeValueList");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(), "entityList");
+        assertThat(solutionDescriptor.getEntityCollectionMemberAccessorMap()).containsOnlyKeys("entityList");
 
-        assertMapContainsKeysExactly(
-                solutionDescriptor.findEntityDescriptor(TestdataGenericEntity.class).getVariableDescriptorMap(), "value",
-                "subTypeValue", "complexGenericValue");
-
-    }
-
-    // ************************************************************************
-    // Inheritance
-    // ************************************************************************
-
-    @Test
-    @Deprecated
-    public void extendedAbstractSolution() {
-        SolutionDescriptor<TestdataExtendedAbstractSolution> solutionDescriptor = TestdataExtendedAbstractSolution
-                .buildSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "problemFactList");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entityList");
-
-        TestdataExtendedAbstractSolution solution = new TestdataExtendedAbstractSolution();
-        solution.setValueList(Arrays.asList(new TestdataValue("v1"), new TestdataValue("v2")));
-        solution.setExtraObject(new TestdataValue("extra"));
-        solution.setEntityList(Arrays.asList(new TestdataEntity("e1"), new TestdataEntity("e2")));
-
-        assertAllCodesOfCollection(solutionDescriptor.getAllFacts(solution), "e1", "e2", "extra", "v1", "v2");
-    }
-
-    @Test
-    @Deprecated
-    public void extendedAbstractSolutionOverridesGetScore() {
-        SolutionDescriptor<TestdataScoreGetterOverrideExtendedAbstractSolution> solutionDescriptor = TestdataScoreGetterOverrideExtendedAbstractSolution
-                .buildSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "problemFactList");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entityList");
-
-        TestdataScoreGetterOverrideExtendedAbstractSolution solution = new TestdataScoreGetterOverrideExtendedAbstractSolution();
-        solution.setValueList(Arrays.asList(new TestdataValue("v1"), new TestdataValue("v2")));
-        solution.setExtraObject(new TestdataValue("extra"));
-        solution.setEntityList(Arrays.asList(new TestdataEntity("e1"), new TestdataEntity("e2")));
-
-        assertAllCodesOfCollection(solutionDescriptor.getAllFacts(solution), "e1", "e2", "extra", "v1", "v2");
+        assertThat(solutionDescriptor.findEntityDescriptor(TestdataGenericEntity.class).getVariableDescriptorMap())
+                .containsOnlyKeys("value", "subTypeValue", "complexGenericValue");
     }
 
     // ************************************************************************
@@ -238,14 +182,13 @@ public class SolutionDescriptorTest {
     public void autoDiscoverFields() {
         SolutionDescriptor<TestdataAutoDiscoverFieldSolution> solutionDescriptor = TestdataAutoDiscoverFieldSolution
                 .buildSolutionDescriptor();
-        assertEquals("constraintConfiguration", solutionDescriptor.getConstraintConfigurationMemberAccessor().getName());
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap(), "constraintConfiguration",
+        assertThat(solutionDescriptor.getConstraintConfigurationMemberAccessor().getName())
+                .isEqualTo("constraintConfiguration");
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys("constraintConfiguration",
                 "singleProblemFact");
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "problemFactList");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap(), "otherEntity");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entityList");
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("problemFactList");
+        assertThat(solutionDescriptor.getEntityMemberAccessorMap()).containsOnlyKeys("otherEntity");
+        assertThat(solutionDescriptor.getEntityCollectionMemberAccessorMap()).containsOnlyKeys("entityList");
 
         TestdataObject singleProblemFact = new TestdataObject("p1");
         List<TestdataValue> valueList = Arrays.asList(new TestdataValue("v1"), new TestdataValue("v2"));
@@ -261,14 +204,13 @@ public class SolutionDescriptorTest {
     public void autoDiscoverGetters() {
         SolutionDescriptor<TestdataAutoDiscoverGetterSolution> solutionDescriptor = TestdataAutoDiscoverGetterSolution
                 .buildSolutionDescriptor();
-        assertEquals("constraintConfiguration", solutionDescriptor.getConstraintConfigurationMemberAccessor().getName());
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap(), "constraintConfiguration",
+        assertThat(solutionDescriptor.getConstraintConfigurationMemberAccessor().getName())
+                .isEqualTo("constraintConfiguration");
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys("constraintConfiguration",
                 "singleProblemFact");
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "problemFactList");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap(), "otherEntity");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entityList");
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("problemFactList");
+        assertThat(solutionDescriptor.getEntityMemberAccessorMap()).containsOnlyKeys("otherEntity");
+        assertThat(solutionDescriptor.getEntityCollectionMemberAccessorMap()).containsOnlyKeys("entityList");
 
         TestdataObject singleProblemFact = new TestdataObject("p1");
         List<TestdataValue> valueList = Arrays.asList(new TestdataValue("v1"), new TestdataValue("v2"));
@@ -282,15 +224,13 @@ public class SolutionDescriptorTest {
 
     @Test
     public void autoDiscoverFieldsFactCollectionOverridenToSingleProperty() {
-        SolutionDescriptor<TestdataAutoDiscoverFieldOverrideSolution> solutionDescriptor = TestdataAutoDiscoverFieldOverrideSolution
-                .buildSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap(),
-                "singleProblemFact", "listProblemFact");
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "problemFactList");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap(), "otherEntity");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entityList");
+        SolutionDescriptor<TestdataAutoDiscoverFieldOverrideSolution> solutionDescriptor =
+                TestdataAutoDiscoverFieldOverrideSolution.buildSolutionDescriptor();
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys("singleProblemFact",
+                "listProblemFact");
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("problemFactList");
+        assertThat(solutionDescriptor.getEntityMemberAccessorMap()).containsOnlyKeys("otherEntity");
+        assertThat(solutionDescriptor.getEntityCollectionMemberAccessorMap()).containsOnlyKeys("entityList");
 
         TestdataObject singleProblemFact = new TestdataObject("p1");
         List<TestdataValue> valueList = Arrays.asList(new TestdataValue("v1"), new TestdataValue("v2"));
@@ -306,15 +246,13 @@ public class SolutionDescriptorTest {
 
     @Test
     public void autoDiscoverGettersFactCollectionOverridenToSingleProperty() {
-        SolutionDescriptor<TestdataAutoDiscoverGetterOverrideSolution> solutionDescriptor = TestdataAutoDiscoverGetterOverrideSolution
-                .buildSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap(),
-                "singleProblemFact", "listProblemFact");
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "problemFactList");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap(), "otherEntity");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entityList");
+        SolutionDescriptor<TestdataAutoDiscoverGetterOverrideSolution> solutionDescriptor =
+                TestdataAutoDiscoverGetterOverrideSolution.buildSolutionDescriptor();
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys("singleProblemFact",
+                "listProblemFact");
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("problemFactList");
+        assertThat(solutionDescriptor.getEntityMemberAccessorMap()).containsOnlyKeys("otherEntity");
+        assertThat(solutionDescriptor.getEntityCollectionMemberAccessorMap()).containsOnlyKeys("entityList");
 
         TestdataObject singleProblemFact = new TestdataObject("p1");
         List<TestdataValue> valueList = Arrays.asList(new TestdataValue("v1"), new TestdataValue("v2"));
@@ -330,14 +268,12 @@ public class SolutionDescriptorTest {
 
     @Test
     public void autoDiscoverUnannotatedEntitySubclass() {
-        SolutionDescriptor<TestdataAutoDiscoverUnannotatedEntitySolution> solutionDescriptor = TestdataAutoDiscoverUnannotatedEntitySolution
-                .buildSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap(), "singleProblemFact");
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "problemFactList");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap(), "otherEntity");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entityList");
+        SolutionDescriptor<TestdataAutoDiscoverUnannotatedEntitySolution> solutionDescriptor =
+                TestdataAutoDiscoverUnannotatedEntitySolution.buildSolutionDescriptor();
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys("singleProblemFact");
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys("problemFactList");
+        assertThat(solutionDescriptor.getEntityMemberAccessorMap()).containsOnlyKeys("otherEntity");
+        assertThat(solutionDescriptor.getEntityCollectionMemberAccessorMap()).containsOnlyKeys("entityList");
 
         TestdataObject singleProblemFact = new TestdataObject("p1");
         List<TestdataValue> valueList = Arrays.asList(new TestdataValue("v1"), new TestdataValue("v2"));
@@ -353,15 +289,15 @@ public class SolutionDescriptorTest {
 
     @Test
     public void autoDiscoverGettersOverriddenInSubclass() {
-        SolutionDescriptor<TestdataExtendedAutoDiscoverGetterSolution> solutionDescriptor = TestdataExtendedAutoDiscoverGetterSolution
-                .buildSubclassSolutionDescriptor();
-        assertEquals("constraintConfiguration", solutionDescriptor.getConstraintConfigurationMemberAccessor().getName());
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap(), "constraintConfiguration",
+        SolutionDescriptor<TestdataExtendedAutoDiscoverGetterSolution> solutionDescriptor =
+                TestdataExtendedAutoDiscoverGetterSolution.buildSubclassSolutionDescriptor();
+        assertThat(solutionDescriptor.getConstraintConfigurationMemberAccessor().getName())
+                .isEqualTo("constraintConfiguration");
+        assertThat(solutionDescriptor.getProblemFactMemberAccessorMap()).containsOnlyKeys("constraintConfiguration",
                 "singleProblemFact", "problemFactList");
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap(), "otherEntity");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entityList");
+        assertThat(solutionDescriptor.getProblemFactCollectionMemberAccessorMap()).containsOnlyKeys();
+        assertThat(solutionDescriptor.getEntityMemberAccessorMap()).containsOnlyKeys("otherEntity");
+        assertThat(solutionDescriptor.getEntityCollectionMemberAccessorMap()).containsOnlyKeys("entityList");
 
         TestdataObject singleProblemFact = new TestdataObject("p1");
         List<TestdataValue> listAsSingleProblemFact = new CodeAssertableArrayList<>(
@@ -372,22 +308,6 @@ public class SolutionDescriptorTest {
                 "s1", singleProblemFact, listAsSingleProblemFact, entityList, otherEntity);
 
         assertAllCodesOfCollection(solutionDescriptor.getAllFacts(solution), "otherE1", "f1", "p1", "e1", "e2");
-    }
-
-    // ************************************************************************
-    // Legacy
-    // ************************************************************************
-
-    @Test
-    @Deprecated
-    public void legacySolution() {
-        SolutionDescriptor<TestdataLegacySolution> solutionDescriptor = TestdataLegacySolution.buildSolutionDescriptor();
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getProblemFactCollectionMemberAccessorMap(),
-                "problemFacts");
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityMemberAccessorMap());
-        assertMapContainsKeysExactly(solutionDescriptor.getEntityCollectionMemberAccessorMap(),
-                "entityList");
     }
 
 }

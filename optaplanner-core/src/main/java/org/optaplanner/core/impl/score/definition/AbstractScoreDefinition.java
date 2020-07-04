@@ -16,9 +16,9 @@
 
 package org.optaplanner.core.impl.score.definition;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 
 import org.optaplanner.core.api.score.Score;
 import org.optaplanner.core.impl.score.buildin.hardsoft.HardSoftScoreDefinition;
@@ -29,7 +29,7 @@ import org.optaplanner.core.impl.score.buildin.hardsoft.HardSoftScoreDefinition;
  * @see ScoreDefinition
  * @see HardSoftScoreDefinition
  */
-public abstract class AbstractScoreDefinition<S extends Score<S>> implements ScoreDefinition<S>, Serializable {
+public abstract class AbstractScoreDefinition<S extends Score<S>> implements ScoreDefinition<S> {
 
     private final String[] levelLabels;
 
@@ -39,10 +39,6 @@ public abstract class AbstractScoreDefinition<S extends Score<S>> implements Sco
 
     protected static long sanitize(long number) {
         return number == 0L ? 1L : number;
-    }
-
-    protected static double sanitize(double number) {
-        return number == 0d ? 1d : number;
     }
 
     protected static BigDecimal sanitize(BigDecimal number) {
@@ -90,6 +86,11 @@ public abstract class AbstractScoreDefinition<S extends Score<S>> implements Sco
     @Override
     public String formatScore(S score) {
         return score.toString();
+    }
+
+    @Override
+    public boolean isCompatibleArithmeticArgument(Score score) {
+        return Objects.equals(score.getClass(), getScoreClass());
     }
 
     @Override

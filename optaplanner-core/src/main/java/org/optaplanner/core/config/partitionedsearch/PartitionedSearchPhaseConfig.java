@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,22 +21,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import org.optaplanner.core.api.score.director.ScoreDirector;
 import org.optaplanner.core.api.solver.Solver;
 import org.optaplanner.core.config.constructionheuristic.ConstructionHeuristicPhaseConfig;
-import org.optaplanner.core.config.heuristic.policy.HeuristicConfigPolicy;
+import org.optaplanner.core.config.exhaustivesearch.ExhaustiveSearchPhaseConfig;
 import org.optaplanner.core.config.localsearch.LocalSearchPhaseConfig;
+import org.optaplanner.core.config.phase.NoChangePhaseConfig;
 import org.optaplanner.core.config.phase.PhaseConfig;
+import org.optaplanner.core.config.phase.custom.CustomPhaseConfig;
 import org.optaplanner.core.config.solver.EnvironmentMode;
-import org.optaplanner.core.config.solver.SolverConfig;
 import org.optaplanner.core.config.util.ConfigUtils;
 import org.optaplanner.core.config.util.KeyAsElementMapConverter;
+import org.optaplanner.core.impl.heuristic.HeuristicConfigPolicy;
 import org.optaplanner.core.impl.partitionedsearch.DefaultPartitionedSearchPhase;
 import org.optaplanner.core.impl.partitionedsearch.PartitionedSearchPhase;
 import org.optaplanner.core.impl.partitionedsearch.partitioner.SolutionPartitioner;
-import org.optaplanner.core.impl.score.director.ScoreDirector;
 import org.optaplanner.core.impl.solver.recaller.BestSolutionRecaller;
 import org.optaplanner.core.impl.solver.termination.Termination;
 import org.optaplanner.core.impl.solver.thread.ChildThreadType;
+import org.optaplanner.core.impl.util.JaxbCustomPropertiesAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +54,7 @@ import com.thoughtworks.xstream.annotations.XStreamImplicit;
 @XStreamAlias("partitionedSearch")
 public class PartitionedSearchPhaseConfig extends PhaseConfig<PartitionedSearchPhaseConfig> {
 
+    public static final String XML_ELEMENT_NAME = "partitionedSearch";
     public static final String ACTIVE_THREAD_COUNT_AUTO = "AUTO";
     public static final String ACTIVE_THREAD_COUNT_UNLIMITED = "UNLIMITED";
 
@@ -56,14 +64,21 @@ public class PartitionedSearchPhaseConfig extends PhaseConfig<PartitionedSearchP
     // and also because the input config file should match the output config file
 
     protected Class<? extends SolutionPartitioner<?>> solutionPartitionerClass = null;
+    @XmlJavaTypeAdapter(JaxbCustomPropertiesAdapter.class)
     @XStreamConverter(KeyAsElementMapConverter.class)
     protected Map<String, String> solutionPartitionerCustomProperties = null;
 
-    /** @deprecated Use {@link SolverConfig#threadFactoryClass} instead. */
-    @Deprecated // TODO remove in 8.0
-    protected Class<? extends ThreadFactory> threadFactoryClass = null;
     protected String runnablePartThreadLimit = null;
 
+    @XmlElements({
+            @XmlElement(name = ConstructionHeuristicPhaseConfig.XML_ELEMENT_NAME,
+                    type = ConstructionHeuristicPhaseConfig.class),
+            @XmlElement(name = CustomPhaseConfig.XML_ELEMENT_NAME, type = CustomPhaseConfig.class),
+            @XmlElement(name = ExhaustiveSearchPhaseConfig.XML_ELEMENT_NAME, type = ExhaustiveSearchPhaseConfig.class),
+            @XmlElement(name = LocalSearchPhaseConfig.XML_ELEMENT_NAME, type = LocalSearchPhaseConfig.class),
+            @XmlElement(name = NoChangePhaseConfig.XML_ELEMENT_NAME, type = NoChangePhaseConfig.class),
+            @XmlElement(name = PartitionedSearchPhaseConfig.XML_ELEMENT_NAME, type = PartitionedSearchPhaseConfig.class)
+    })
     @XStreamImplicit()
     protected List<PhaseConfig> phaseConfigList = null;
 
@@ -85,22 +100,6 @@ public class PartitionedSearchPhaseConfig extends PhaseConfig<PartitionedSearchP
 
     public void setSolutionPartitionerCustomProperties(Map<String, String> solutionPartitionerCustomProperties) {
         this.solutionPartitionerCustomProperties = solutionPartitionerCustomProperties;
-    }
-
-    /**
-     * @deprecated Use {@link SolverConfig#getThreadFactoryClass} instead
-     */
-    @Deprecated
-    public Class<? extends ThreadFactory> getThreadFactoryClass() {
-        return threadFactoryClass;
-    }
-
-    /**
-     * @deprecated Use {@link SolverConfig#setThreadFactoryClass} instead.
-     */
-    @Deprecated
-    public void setThreadFactoryClass(Class<? extends ThreadFactory> threadFactoryClass) {
-        this.threadFactoryClass = threadFactoryClass;
     }
 
     /**
@@ -150,12 +149,7 @@ public class PartitionedSearchPhaseConfig extends PhaseConfig<PartitionedSearchP
     public PartitionedSearchPhase buildPhase(int phaseIndex, HeuristicConfigPolicy solverConfigPolicy,
             BestSolutionRecaller bestSolutionRecaller, Termination solverTermination) {
         HeuristicConfigPolicy phaseConfigPolicy = solverConfigPolicy.createPhaseConfigPolicy();
-        ThreadFactory threadFactory;
-        if (threadFactoryClass != null) {
-            threadFactory = ConfigUtils.newInstance(this, "threadFactoryClass", threadFactoryClass);
-        } else {
-            threadFactory = solverConfigPolicy.buildThreadFactory(ChildThreadType.PART_THREAD);
-        }
+        ThreadFactory threadFactory = solverConfigPolicy.buildThreadFactory(ChildThreadType.PART_THREAD);
         DefaultPartitionedSearchPhase phase = new DefaultPartitionedSearchPhase(
                 phaseIndex, solverConfigPolicy.getLogIndentation(), bestSolutionRecaller,
                 buildPhaseTermination(phaseConfigPolicy, solverTermination),
@@ -230,8 +224,6 @@ public class PartitionedSearchPhaseConfig extends PhaseConfig<PartitionedSearchP
                 inheritedConfig.getSolutionPartitionerClass());
         solutionPartitionerCustomProperties = ConfigUtils.inheritMergeableMapProperty(
                 solutionPartitionerCustomProperties, inheritedConfig.getSolutionPartitionerCustomProperties());
-        threadFactoryClass = ConfigUtils.inheritOverwritableProperty(threadFactoryClass,
-                inheritedConfig.getThreadFactoryClass());
         runnablePartThreadLimit = ConfigUtils.inheritOverwritableProperty(runnablePartThreadLimit,
                 inheritedConfig.getRunnablePartThreadLimit());
         phaseConfigList = ConfigUtils.inheritMergeableListConfig(

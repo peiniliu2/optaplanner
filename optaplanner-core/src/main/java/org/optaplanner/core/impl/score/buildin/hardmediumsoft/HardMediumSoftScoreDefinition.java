@@ -19,13 +19,12 @@ package org.optaplanner.core.impl.score.buildin.hardmediumsoft;
 import java.util.Arrays;
 
 import org.optaplanner.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
-import org.optaplanner.core.api.score.buildin.hardmediumsoft.HardMediumSoftScoreHolder;
 import org.optaplanner.core.config.score.trend.InitializingScoreTrendLevel;
-import org.optaplanner.core.impl.score.definition.AbstractFeasibilityScoreDefinition;
+import org.optaplanner.core.impl.score.definition.AbstractScoreDefinition;
 import org.optaplanner.core.impl.score.inliner.ScoreInliner;
 import org.optaplanner.core.impl.score.trend.InitializingScoreTrend;
 
-public class HardMediumSoftScoreDefinition extends AbstractFeasibilityScoreDefinition<HardMediumSoftScore> {
+public class HardMediumSoftScoreDefinition extends AbstractScoreDefinition<HardMediumSoftScore> {
 
     public HardMediumSoftScoreDefinition() {
         super(new String[] { "hard score", "medium score", "soft score" });
@@ -81,8 +80,8 @@ public class HardMediumSoftScoreDefinition extends AbstractFeasibilityScoreDefin
     }
 
     @Override
-    public HardMediumSoftScoreHolder buildScoreHolder(boolean constraintMatchEnabled) {
-        return new HardMediumSoftScoreHolder(constraintMatchEnabled);
+    public HardMediumSoftScoreHolderImpl buildScoreHolder(boolean constraintMatchEnabled) {
+        return new HardMediumSoftScoreHolderImpl(constraintMatchEnabled);
     }
 
     @Override

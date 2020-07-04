@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import org.optaplanner.core.api.domain.solution.PlanningSolution;
 import org.optaplanner.core.api.score.Score;
 import org.optaplanner.core.api.score.constraint.ConstraintMatchTotal;
 import org.optaplanner.core.api.score.constraint.Indictment;
+import org.optaplanner.core.api.score.director.ScoreDirector;
 import org.optaplanner.core.impl.domain.entity.descriptor.EntityDescriptor;
 import org.optaplanner.core.impl.domain.variable.descriptor.VariableDescriptor;
 import org.optaplanner.core.impl.score.director.AbstractScoreDirector;
-import org.optaplanner.core.impl.score.director.ScoreDirector;
 import org.optaplanner.core.impl.score.stream.ConstraintSession;
 
 /**
@@ -58,6 +58,9 @@ public class ConstraintStreamScoreDirector<Solution_>
     }
 
     private void resetConstraintStreamingSession() {
+        if (session != null) {
+            session.close();
+        }
         session = scoreDirectorFactory.newConstraintStreamingSession(constraintMatchEnabledPreference, workingSolution);
         Collection<Object> workingFacts = getSolutionDescriptor().getAllFacts(workingSolution);
         for (Object fact : workingFacts) {
@@ -76,15 +79,6 @@ public class ConstraintStreamScoreDirector<Solution_>
     @Override
     public boolean isConstraintMatchEnabled() {
         return constraintMatchEnabledPreference;
-    }
-
-    @Override
-    public Collection<ConstraintMatchTotal> getConstraintMatchTotals() {
-        if (workingSolution == null) {
-            throw new IllegalStateException(
-                    "The method setWorkingSolution() must be called before the method getConstraintMatchTotals().");
-        }
-        return session.getConstraintMatchTotalMap().values();
     }
 
     @Override

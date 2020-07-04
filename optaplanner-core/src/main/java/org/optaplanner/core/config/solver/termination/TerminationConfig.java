@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlElement;
+
 import org.optaplanner.core.api.score.Score;
 import org.optaplanner.core.config.AbstractConfig;
-import org.optaplanner.core.config.heuristic.policy.HeuristicConfigPolicy;
 import org.optaplanner.core.config.util.ConfigUtils;
-import org.optaplanner.core.impl.score.definition.FeasibilityScoreDefinition;
+import org.optaplanner.core.impl.heuristic.HeuristicConfigPolicy;
 import org.optaplanner.core.impl.score.definition.ScoreDefinition;
 import org.optaplanner.core.impl.solver.termination.AbstractCompositeTermination;
 import org.optaplanner.core.impl.solver.termination.AndCompositeTermination;
@@ -39,16 +40,12 @@ import org.optaplanner.core.impl.solver.termination.TimeMillisSpentTermination;
 import org.optaplanner.core.impl.solver.termination.UnimprovedStepCountTermination;
 import org.optaplanner.core.impl.solver.termination.UnimprovedTimeMillisSpentScoreDifferenceThresholdTermination;
 import org.optaplanner.core.impl.solver.termination.UnimprovedTimeMillisSpentTermination;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamImplicit;
 
 @XStreamAlias("termination")
 public class TerminationConfig extends AbstractConfig<TerminationConfig> {
-
-    private static final Logger logger = LoggerFactory.getLogger(TerminationConfig.class);
 
     private Class<? extends Termination> terminationClass = null;
 
@@ -75,13 +72,9 @@ public class TerminationConfig extends AbstractConfig<TerminationConfig> {
     private Integer stepCountLimit = null;
     private Integer unimprovedStepCountLimit = null;
 
-    /**
-     * @deprecated Use {@link #scoreCalculationCountLimit} instead. Will be removed in 8.0.
-     */
-    @Deprecated
-    private Long calculateCountLimit = null;
     private Long scoreCalculationCountLimit = null;
 
+    @XmlElement(name = "termination")
     @XStreamImplicit(itemFieldName = "termination")
     private List<TerminationConfig> terminationConfigList = null;
 
@@ -235,22 +228,6 @@ public class TerminationConfig extends AbstractConfig<TerminationConfig> {
 
     public void setUnimprovedStepCountLimit(Integer unimprovedStepCountLimit) {
         this.unimprovedStepCountLimit = unimprovedStepCountLimit;
-    }
-
-    /**
-     * @deprecated Use {@link #getScoreCalculationCountLimit()} instead. Will be removed in 8.0.
-     */
-    @Deprecated
-    public Long getCalculateCountLimit() {
-        return calculateCountLimit;
-    }
-
-    /**
-     * @deprecated Use {@link #setScoreCalculationCountLimit(Long)} instead. Will be removed in 8.0.
-     */
-    @Deprecated
-    public void setCalculateCountLimit(Long calculateCountLimit) {
-        this.calculateCountLimit = calculateCountLimit;
     }
 
     public Long getScoreCalculationCountLimit() {
@@ -433,32 +410,16 @@ public class TerminationConfig extends AbstractConfig<TerminationConfig> {
         }
         if (bestScoreFeasible != null) {
             ScoreDefinition scoreDefinition = configPolicy.getScoreDefinition();
-            if (!(scoreDefinition instanceof FeasibilityScoreDefinition)) {
-                throw new IllegalStateException("The termination bestScoreFeasible (" + bestScoreFeasible
-                        + ") is not compatible with a scoreDefinitionClass (" + scoreDefinition.getClass()
-                        + ") which does not implement the interface "
-                        + FeasibilityScoreDefinition.class.getSimpleName() + ".");
-            }
             if (!bestScoreFeasible) {
                 throw new IllegalArgumentException("The termination bestScoreFeasible (" + bestScoreFeasible
                         + ") cannot be false.");
             }
-            FeasibilityScoreDefinition feasibilityScoreDefinition = (FeasibilityScoreDefinition) scoreDefinition;
-            double[] timeGradientWeightFeasibleNumbers = new double[feasibilityScoreDefinition.getFeasibleLevelsSize() - 1];
+            double[] timeGradientWeightFeasibleNumbers = new double[scoreDefinition.getFeasibleLevelsSize() - 1];
             Arrays.fill(timeGradientWeightFeasibleNumbers, 0.50); // Number pulled out of thin air
-            terminationList.add(new BestScoreFeasibleTermination(feasibilityScoreDefinition,
-                    timeGradientWeightFeasibleNumbers));
+            terminationList.add(new BestScoreFeasibleTermination(scoreDefinition, timeGradientWeightFeasibleNumbers));
         }
         if (stepCountLimit != null) {
             terminationList.add(new StepCountTermination(stepCountLimit));
-        }
-        if (calculateCountLimit != null) {
-            logger.info("Deprecated use of calculateCountLimit ({}) in solver configuration.", calculateCountLimit);
-            if (scoreCalculationCountLimit != null) {
-                throw new IllegalStateException("The calculateCountLimit (" + calculateCountLimit
-                        + ") and scoreCalculationCountLimit (" + scoreCalculationCountLimit + ") cannot be used together.");
-            }
-            terminationList.add(new ScoreCalculationCountTermination(calculateCountLimit));
         }
         if (scoreCalculationCountLimit != null) {
             terminationList.add(new ScoreCalculationCountTermination(scoreCalculationCountLimit));
@@ -680,8 +641,6 @@ public class TerminationConfig extends AbstractConfig<TerminationConfig> {
                 inheritedConfig.getStepCountLimit());
         unimprovedStepCountLimit = ConfigUtils.inheritOverwritableProperty(unimprovedStepCountLimit,
                 inheritedConfig.getUnimprovedStepCountLimit());
-        calculateCountLimit = ConfigUtils.inheritOverwritableProperty(calculateCountLimit,
-                inheritedConfig.getCalculateCountLimit());
         scoreCalculationCountLimit = ConfigUtils.inheritOverwritableProperty(scoreCalculationCountLimit,
                 inheritedConfig.getScoreCalculationCountLimit());
         terminationConfigList = ConfigUtils.inheritMergeableListConfig(

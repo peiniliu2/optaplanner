@@ -1,11 +1,11 @@
 /*
- * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,8 @@
 
 package org.optaplanner.benchmark.api;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,20 +29,15 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.kie.api.KieServices;
-import org.kie.api.builder.ReleaseId;
-import org.kie.api.runtime.KieContainer;
 import org.optaplanner.benchmark.config.PlannerBenchmarkConfig;
 import org.optaplanner.benchmark.config.SolverBenchmarkConfig;
 import org.optaplanner.core.api.solver.DivertingClassLoader;
-import org.optaplanner.core.api.solver.SolverFactory;
 import org.optaplanner.core.config.phase.custom.CustomPhaseConfig;
 import org.optaplanner.core.config.solver.SolverConfig;
 import org.optaplanner.core.impl.phase.custom.NoChangeCustomPhaseCommand;
 import org.optaplanner.core.impl.testdata.domain.TestdataEntity;
 import org.optaplanner.core.impl.testdata.domain.TestdataSolution;
 import org.optaplanner.core.impl.testdata.domain.TestdataValue;
-import org.optaplanner.core.impl.testdata.util.KieContainerHelper;
 import org.optaplanner.core.impl.testdata.util.PlannerTestUtils;
 
 public class PlannerBenchmarkFactoryTest {
@@ -70,11 +65,11 @@ public class PlannerBenchmarkFactoryTest {
         TestdataSolution solution = new TestdataSolution("s1");
         solution.setEntityList(Arrays.asList(new TestdataEntity("e1"), new TestdataEntity("e2"), new TestdataEntity("e3")));
         solution.setValueList(Arrays.asList(new TestdataValue("v1"), new TestdataValue("v2")));
-        assertNotNull(benchmarkFactory.buildPlannerBenchmark(solution));
+        assertThat(benchmarkFactory.buildPlannerBenchmark(solution)).isNotNull();
 
         benchmarkFactory = PlannerBenchmarkFactory.createFromSolverConfigXmlResource(
                 "org/optaplanner/core/config/solver/testdataSolverConfig.xml", benchmarkOutputTestDir);
-        assertNotNull(benchmarkFactory.buildPlannerBenchmark(solution));
+        assertThat(benchmarkFactory.buildPlannerBenchmark(solution)).isNotNull();
     }
 
     @Test
@@ -86,12 +81,12 @@ public class PlannerBenchmarkFactoryTest {
         TestdataSolution solution = new TestdataSolution("s1");
         solution.setEntityList(Arrays.asList(new TestdataEntity("e1"), new TestdataEntity("e2"), new TestdataEntity("e3")));
         solution.setValueList(Arrays.asList(new TestdataValue("v1"), new TestdataValue("v2")));
-        assertNotNull(benchmarkFactory.buildPlannerBenchmark(solution));
+        assertThat(benchmarkFactory.buildPlannerBenchmark(solution)).isNotNull();
 
         benchmarkFactory = PlannerBenchmarkFactory.createFromSolverConfigXmlResource(
                 "divertThroughClassLoader/org/optaplanner/core/api/solver/classloaderTestdataSolverConfig.xml",
                 benchmarkOutputTestDir, classLoader);
-        assertNotNull(benchmarkFactory.buildPlannerBenchmark(solution));
+        assertThat(benchmarkFactory.buildPlannerBenchmark(solution)).isNotNull();
     }
 
     @Test
@@ -116,21 +111,6 @@ public class PlannerBenchmarkFactoryTest {
         assertThatIllegalArgumentException().isThrownBy(() -> benchmarkFactory.buildPlannerBenchmark(solution, null));
     }
 
-    @Test
-    @Deprecated
-    public void createFromSolverFactory() {
-        SolverConfig solverConfig = PlannerTestUtils.buildSolverConfig(
-                TestdataSolution.class, TestdataEntity.class);
-        SolverFactory<TestdataSolution> solverFactory = SolverFactory.create(solverConfig);
-        PlannerBenchmarkFactory benchmarkFactory = PlannerBenchmarkFactory.createFromSolverFactory(
-                solverFactory);
-        TestdataSolution solution = new TestdataSolution("s1");
-        solution.setEntityList(Arrays.asList(new TestdataEntity("e1"), new TestdataEntity("e2"), new TestdataEntity("e3")));
-        solution.setValueList(Arrays.asList(new TestdataValue("v1"), new TestdataValue("v2")));
-        PlannerBenchmark benchmark = benchmarkFactory.buildPlannerBenchmark(solution);
-        benchmark.benchmark();
-    }
-
     // ************************************************************************
     // Static creation methods: XML
     // ************************************************************************
@@ -140,7 +120,7 @@ public class PlannerBenchmarkFactoryTest {
         PlannerBenchmarkFactory plannerBenchmarkFactory = PlannerBenchmarkFactory.createFromXmlResource(
                 "org/optaplanner/benchmark/api/testdataBenchmarkConfig.xml");
         PlannerBenchmark plannerBenchmark = plannerBenchmarkFactory.buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
+        assertThat(plannerBenchmark).isNotNull();
         plannerBenchmark.benchmark();
     }
 
@@ -151,7 +131,7 @@ public class PlannerBenchmarkFactoryTest {
         PlannerBenchmarkFactory plannerBenchmarkFactory = PlannerBenchmarkFactory.createFromXmlResource(
                 "divertThroughClassLoader/org/optaplanner/benchmark/api/classloaderTestdataBenchmarkConfig.xml", classLoader);
         PlannerBenchmark plannerBenchmark = plannerBenchmarkFactory.buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
+        assertThat(plannerBenchmark).isNotNull();
         plannerBenchmark.benchmark();
     }
 
@@ -170,7 +150,7 @@ public class PlannerBenchmarkFactoryTest {
         phaseConfig.setCustomPhaseCommandClassList(Collections.singletonList(NoChangeCustomPhaseCommand.class));
         solverBenchmarkConfig.getSolverConfig().setPhaseConfigList(Collections.singletonList(phaseConfig));
         PlannerBenchmark plannerBenchmark = PlannerBenchmarkFactory.create(benchmarkConfig).buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
+        assertThat(plannerBenchmark).isNotNull();
         plannerBenchmark.benchmark();
     }
 
@@ -181,7 +161,7 @@ public class PlannerBenchmarkFactoryTest {
         SolverBenchmarkConfig solverBenchmarkConfig = benchmarkConfig.getSolverBenchmarkConfigList().get(0);
         solverBenchmarkConfig.setSubSingleCount(3);
         PlannerBenchmark plannerBenchmark = PlannerBenchmarkFactory.create(benchmarkConfig).buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
+        assertThat(plannerBenchmark).isNotNull();
         plannerBenchmark.benchmark();
     }
 
@@ -194,7 +174,7 @@ public class PlannerBenchmarkFactoryTest {
         }
         PlannerBenchmarkFactory plannerBenchmarkFactory = PlannerBenchmarkFactory.createFromXmlFile(file);
         PlannerBenchmark plannerBenchmark = plannerBenchmarkFactory.buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
+        assertThat(plannerBenchmark).isNotNull();
         plannerBenchmark.benchmark();
     }
 
@@ -209,7 +189,7 @@ public class PlannerBenchmarkFactoryTest {
         }
         PlannerBenchmarkFactory plannerBenchmarkFactory = PlannerBenchmarkFactory.createFromXmlFile(file, classLoader);
         PlannerBenchmark plannerBenchmark = plannerBenchmarkFactory.buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
+        assertThat(plannerBenchmark).isNotNull();
         plannerBenchmark.benchmark();
     }
 
@@ -222,7 +202,7 @@ public class PlannerBenchmarkFactoryTest {
         PlannerBenchmarkFactory plannerBenchmarkFactory = PlannerBenchmarkFactory.createFromFreemarkerXmlResource(
                 "org/optaplanner/benchmark/api/testdataBenchmarkConfigTemplate.xml.ftl");
         PlannerBenchmark plannerBenchmark = plannerBenchmarkFactory.buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
+        assertThat(plannerBenchmark).isNotNull();
         plannerBenchmark.benchmark();
     }
 
@@ -234,7 +214,7 @@ public class PlannerBenchmarkFactoryTest {
                 "divertThroughClassLoader/org/optaplanner/benchmark/api/classloaderTestdataBenchmarkConfigTemplate.xml.ftl",
                 classLoader);
         PlannerBenchmark plannerBenchmark = plannerBenchmarkFactory.buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
+        assertThat(plannerBenchmark).isNotNull();
         plannerBenchmark.benchmark();
     }
 
@@ -253,7 +233,7 @@ public class PlannerBenchmarkFactoryTest {
         }
         PlannerBenchmarkFactory plannerBenchmarkFactory = PlannerBenchmarkFactory.createFromFreemarkerXmlFile(file);
         PlannerBenchmark plannerBenchmark = plannerBenchmarkFactory.buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
+        assertThat(plannerBenchmark).isNotNull();
         plannerBenchmark.benchmark();
     }
 
@@ -269,47 +249,8 @@ public class PlannerBenchmarkFactoryTest {
         PlannerBenchmarkFactory plannerBenchmarkFactory = PlannerBenchmarkFactory.createFromFreemarkerXmlFile(file,
                 classLoader);
         PlannerBenchmark plannerBenchmark = plannerBenchmarkFactory.buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
+        assertThat(plannerBenchmark).isNotNull();
         plannerBenchmark.benchmark();
-    }
-
-    // ************************************************************************
-    // Static creation methods: PlannerBenchmarkConfig
-    // ************************************************************************
-
-    // ************************************************************************
-    // Static creation methods: KieContainer
-    // ************************************************************************
-
-    @Test
-    public void createFromReleaseId() throws IOException {
-        ReleaseId releaseId = deployTestingKjar();
-        PlannerBenchmarkFactory plannerBenchmarkFactory = PlannerBenchmarkFactory.createFromKieContainerXmlResource(
-                releaseId, "testdata/kjar/benchmarkConfig.solver");
-        PlannerBenchmark plannerBenchmark = plannerBenchmarkFactory.buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
-        plannerBenchmark.benchmark();
-    }
-
-    @Test
-    public void createFromKieContainer() throws IOException {
-        ReleaseId releaseId = deployTestingKjar();
-        KieContainer kieContainer = KieServices.Factory.get().newKieContainer(releaseId);
-        PlannerBenchmarkFactory plannerBenchmarkFactory = PlannerBenchmarkFactory.createFromKieContainerXmlResource(
-                kieContainer, "testdata/kjar/benchmarkConfig.solver");
-        PlannerBenchmark plannerBenchmark = plannerBenchmarkFactory.buildPlannerBenchmark();
-        assertNotNull(plannerBenchmark);
-        plannerBenchmark.benchmark();
-    }
-
-    private ReleaseId deployTestingKjar() throws IOException {
-        KieContainerHelper kieContainerHelper = new KieContainerHelper();
-
-        ReleaseId releaseId = kieContainerHelper.deployTestdataBenchmarkKjar(
-                "buildSolverWithReleaseId",
-                "org/optaplanner/benchmark/api/kieContainerNamedKsessionKmodule.xml",
-                "org/optaplanner/benchmark/api/testdataKieContainerBenchmarkConfig.xml");
-        return releaseId;
     }
 
 }

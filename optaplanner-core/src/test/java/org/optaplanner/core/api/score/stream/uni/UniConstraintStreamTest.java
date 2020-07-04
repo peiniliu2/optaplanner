@@ -17,9 +17,9 @@
 package org.optaplanner.core.api.score.stream.uni;
 
 import static java.util.Comparator.comparing;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertEquals;
 import static org.optaplanner.core.api.score.stream.ConstraintCollectors.count;
 import static org.optaplanner.core.api.score.stream.ConstraintCollectors.countDistinct;
 import static org.optaplanner.core.api.score.stream.ConstraintCollectors.max;
@@ -56,8 +56,6 @@ import org.optaplanner.core.impl.testdata.domain.score.lavish.TestdataLavishEnti
 import org.optaplanner.core.impl.testdata.domain.score.lavish.TestdataLavishSolution;
 import org.optaplanner.core.impl.testdata.domain.score.lavish.TestdataLavishValue;
 import org.optaplanner.core.impl.testdata.domain.score.lavish.TestdataLavishValueGroup;
-
-import com.google.common.base.Functions;
 
 public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
 
@@ -754,7 +752,7 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
         InnerScoreDirector<TestdataLavishSolution> scoreDirector = buildScoreDirector((factory) -> {
             return factory.from(TestdataLavishEntity.class)
                     .groupBy(TestdataLavishEntity::getEntityGroup)
-                    .join(TestdataLavishEntity.class, equal(Functions.identity(), TestdataLavishEntity::getEntityGroup))
+                    .join(TestdataLavishEntity.class, equal(Function.identity(), TestdataLavishEntity::getEntityGroup))
                     .filter((group, entity) -> group.equals(entityGroup1))
                     .penalize(TEST_CONSTRAINT_NAME, SimpleScore.ONE);
         });
@@ -1185,18 +1183,19 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
         TestdataEntity e2 = new TestdataEntity("e2", v1);
         solution.setEntityList(Arrays.asList(e1, e2));
 
-        ConstraintStreamScoreDirectorFactory<TestdataSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
-                        factory.from(TestdataEntity.class)
-                                .penalize("myConstraint1", SimpleScore.ONE),
-                        factory.from(TestdataEntity.class)
-                                .penalize("myConstraint2", SimpleScore.ONE, entity -> 20)
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
+                                factory.from(TestdataEntity.class)
+                                        .penalize("myConstraint1", SimpleScore.ONE),
+                                factory.from(TestdataEntity.class)
+                                        .penalize("myConstraint2", SimpleScore.ONE, entity -> 20)
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
         scoreDirector.setWorkingSolution(solution);
-        assertEquals(SimpleScore.of(-42), scoreDirector.calculateScore());
+        assertThat(scoreDirector.calculateScore()).isEqualTo(SimpleScore.of(-42));
     }
 
     @TestTemplate
@@ -1208,18 +1207,19 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
         TestdataEntity e2 = new TestdataEntity("e2", v1);
         solution.setEntityList(Arrays.asList(e1, e2));
 
-        ConstraintStreamScoreDirectorFactory<TestdataSimpleLongScoreSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataSimpleLongScoreSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
-                        factory.from(TestdataEntity.class)
-                                .penalize("myConstraint1", SimpleLongScore.ONE),
-                        factory.from(TestdataEntity.class)
-                                .penalizeLong("myConstraint2", SimpleLongScore.ONE, entity -> 20L)
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataSimpleLongScoreSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataSimpleLongScoreSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
+                                factory.from(TestdataEntity.class)
+                                        .penalize("myConstraint1", SimpleLongScore.ONE),
+                                factory.from(TestdataEntity.class)
+                                        .penalizeLong("myConstraint2", SimpleLongScore.ONE, entity -> 20L)
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataSimpleLongScoreSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
         scoreDirector.setWorkingSolution(solution);
-        assertEquals(SimpleLongScore.of(-42L), scoreDirector.calculateScore());
+        assertThat(scoreDirector.calculateScore()).isEqualTo(SimpleLongScore.of(-42L));
     }
 
     @TestTemplate
@@ -1231,18 +1231,21 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
         TestdataEntity e2 = new TestdataEntity("e2", v1);
         solution.setEntityList(Arrays.asList(e1, e2));
 
-        ConstraintStreamScoreDirectorFactory<TestdataSimpleBigDecimalScoreSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataSimpleBigDecimalScoreSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
-                        factory.from(TestdataEntity.class)
-                                .penalize("myConstraint1", SimpleBigDecimalScore.ONE),
-                        factory.from(TestdataEntity.class)
-                                .penalizeBigDecimal("myConstraint2", SimpleBigDecimalScore.ONE, entity -> new BigDecimal("0.2"))
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataSimpleBigDecimalScoreSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataSimpleBigDecimalScoreSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
+                                factory.from(TestdataEntity.class)
+                                        .penalize("myConstraint1", SimpleBigDecimalScore.ONE),
+                                factory.from(TestdataEntity.class)
+                                        .penalizeBigDecimal("myConstraint2", SimpleBigDecimalScore.ONE,
+                                                entity -> new BigDecimal("0.2"))
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataSimpleBigDecimalScoreSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
         scoreDirector.setWorkingSolution(solution);
-        assertEquals(SimpleBigDecimalScore.of(new BigDecimal("-2.4")), scoreDirector.calculateScore());
+        assertThat(scoreDirector.calculateScore())
+                .isEqualTo(SimpleBigDecimalScore.of(new BigDecimal("-2.4")));
     }
 
     @TestTemplate
@@ -1250,11 +1253,12 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
         TestdataLavishSolution solution = TestdataLavishSolution.generateSolution(1, 1, 1, 1);
 
         String constraintName = "myConstraint1";
-        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataLavishSolution.buildSolutionDescriptor(),
-                (factory) -> new Constraint[] {
-                        factory.from(TestdataLavishEntity.class).penalize(constraintName, SimpleScore.ONE, e -> -1)
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataLavishSolution.buildSolutionDescriptor(),
+                        (factory) -> new Constraint[] {
+                                factory.from(TestdataLavishEntity.class).penalize(constraintName, SimpleScore.ONE, e -> -1)
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataLavishSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
@@ -1271,18 +1275,19 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
         TestdataEntity e2 = new TestdataEntity("e2", v1);
         solution.setEntityList(Arrays.asList(e1, e2));
 
-        ConstraintStreamScoreDirectorFactory<TestdataSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
-                        factory.from(TestdataEntity.class)
-                                .reward("myConstraint1", SimpleScore.ONE),
-                        factory.from(TestdataEntity.class)
-                                .reward("myConstraint2", SimpleScore.ONE, entity -> 20)
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
+                                factory.from(TestdataEntity.class)
+                                        .reward("myConstraint1", SimpleScore.ONE),
+                                factory.from(TestdataEntity.class)
+                                        .reward("myConstraint2", SimpleScore.ONE, entity -> 20)
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
         scoreDirector.setWorkingSolution(solution);
-        assertEquals(SimpleScore.of(42), scoreDirector.calculateScore());
+        assertThat(scoreDirector.calculateScore()).isEqualTo(SimpleScore.of(42));
     }
 
     @TestTemplate
@@ -1294,18 +1299,19 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
         TestdataEntity e2 = new TestdataEntity("e2", v1);
         solution.setEntityList(Arrays.asList(e1, e2));
 
-        ConstraintStreamScoreDirectorFactory<TestdataSimpleLongScoreSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataSimpleLongScoreSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
-                        factory.from(TestdataEntity.class)
-                                .reward("myConstraint1", SimpleLongScore.ONE),
-                        factory.from(TestdataEntity.class)
-                                .rewardLong("myConstraint2", SimpleLongScore.ONE, entity -> 20L)
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataSimpleLongScoreSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataSimpleLongScoreSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
+                                factory.from(TestdataEntity.class)
+                                        .reward("myConstraint1", SimpleLongScore.ONE),
+                                factory.from(TestdataEntity.class)
+                                        .rewardLong("myConstraint2", SimpleLongScore.ONE, entity -> 20L)
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataSimpleLongScoreSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
         scoreDirector.setWorkingSolution(solution);
-        assertEquals(SimpleLongScore.of(42L), scoreDirector.calculateScore());
+        assertThat(scoreDirector.calculateScore()).isEqualTo(SimpleLongScore.of(42L));
     }
 
     @TestTemplate
@@ -1317,18 +1323,21 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
         TestdataEntity e2 = new TestdataEntity("e2", v1);
         solution.setEntityList(Arrays.asList(e1, e2));
 
-        ConstraintStreamScoreDirectorFactory<TestdataSimpleBigDecimalScoreSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataSimpleBigDecimalScoreSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
-                        factory.from(TestdataEntity.class)
-                                .reward("myConstraint1", SimpleBigDecimalScore.ONE),
-                        factory.from(TestdataEntity.class)
-                                .rewardBigDecimal("myConstraint2", SimpleBigDecimalScore.ONE, entity -> new BigDecimal("0.2"))
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataSimpleBigDecimalScoreSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataSimpleBigDecimalScoreSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
+                                factory.from(TestdataEntity.class)
+                                        .reward("myConstraint1", SimpleBigDecimalScore.ONE),
+                                factory.from(TestdataEntity.class)
+                                        .rewardBigDecimal("myConstraint2", SimpleBigDecimalScore.ONE,
+                                                entity -> new BigDecimal("0.2"))
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataSimpleBigDecimalScoreSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
         scoreDirector.setWorkingSolution(solution);
-        assertEquals(SimpleBigDecimalScore.of(new BigDecimal("2.4")), scoreDirector.calculateScore());
+        assertThat(scoreDirector.calculateScore())
+                .isEqualTo(SimpleBigDecimalScore.of(new BigDecimal("2.4")));
     }
 
     @TestTemplate
@@ -1336,11 +1345,12 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
         TestdataLavishSolution solution = TestdataLavishSolution.generateSolution(1, 1, 1, 1);
 
         String constraintName = "myConstraint1";
-        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataLavishSolution.buildSolutionDescriptor(),
-                (factory) -> new Constraint[] {
-                        factory.from(TestdataLavishEntity.class).reward(constraintName, SimpleScore.ONE, e -> -1)
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataLavishSolution.buildSolutionDescriptor(),
+                        (factory) -> new Constraint[] {
+                                factory.from(TestdataLavishEntity.class).reward(constraintName, SimpleScore.ONE, e -> -1)
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataLavishSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
@@ -1419,37 +1429,38 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
 
         AtomicLong zeroWeightMonitorCount = new AtomicLong(0L);
         AtomicLong oneWeightMonitorCount = new AtomicLong(0L);
-        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataLavishSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
-                        factory.from(TestdataLavishEntity.class)
-                                .filter(entity -> {
-                                    zeroWeightMonitorCount.getAndIncrement();
-                                    return true;
-                                })
-                                .penalize("myConstraint1", SimpleScore.ZERO),
-                        factory.from(TestdataLavishEntity.class)
-                                .filter(entity -> {
-                                    oneWeightMonitorCount.getAndIncrement();
-                                    return true;
-                                })
-                                .penalize("myConstraint2", SimpleScore.ONE)
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataLavishSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
+                                factory.from(TestdataLavishEntity.class)
+                                        .filter(entity -> {
+                                            zeroWeightMonitorCount.getAndIncrement();
+                                            return true;
+                                        })
+                                        .penalize("myConstraint1", SimpleScore.ZERO),
+                                factory.from(TestdataLavishEntity.class)
+                                        .filter(entity -> {
+                                            oneWeightMonitorCount.getAndIncrement();
+                                            return true;
+                                        })
+                                        .penalize("myConstraint2", SimpleScore.ONE)
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataLavishSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
         // From scratch
         scoreDirector.setWorkingSolution(solution);
         scoreDirector.calculateScore();
-        assertEquals(0, zeroWeightMonitorCount.getAndSet(0L));
-        assertEquals(3, oneWeightMonitorCount.getAndSet(0L));
+        assertThat(zeroWeightMonitorCount.getAndSet(0L)).isEqualTo(0);
+        assertThat(oneWeightMonitorCount.getAndSet(0L)).isEqualTo(3);
 
         // Incremental
         scoreDirector.beforeProblemPropertyChanged(entity1);
         entity1.setStringProperty("myProperty2");
         scoreDirector.afterProblemPropertyChanged(entity1);
         scoreDirector.calculateScore();
-        assertEquals(0, zeroWeightMonitorCount.get());
-        assertEquals(1, oneWeightMonitorCount.get());
+        assertThat(zeroWeightMonitorCount.get()).isEqualTo(0);
+        assertThat(oneWeightMonitorCount.get()).isEqualTo(1);
     }
 
     @TestTemplate
@@ -1466,29 +1477,30 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
             monitorCount.getAndIncrement();
             return true;
         };
-        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataLavishSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
-                        factory.from(TestdataLavishEntity.class)
-                                .filter(predicate)
-                                .penalize("myConstraint1", SimpleScore.ONE),
-                        factory.from(TestdataLavishEntity.class)
-                                .filter(predicate)
-                                .penalize("myConstraint2", SimpleScore.ONE)
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataLavishSolution.buildSolutionDescriptor(), (factory) -> new Constraint[] {
+                                factory.from(TestdataLavishEntity.class)
+                                        .filter(predicate)
+                                        .penalize("myConstraint1", SimpleScore.ONE),
+                                factory.from(TestdataLavishEntity.class)
+                                        .filter(predicate)
+                                        .penalize("myConstraint2", SimpleScore.ONE)
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataLavishSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
         // From scratch
         scoreDirector.setWorkingSolution(solution);
         scoreDirector.calculateScore();
-        assertEquals(3, monitorCount.getAndSet(0L));
+        assertThat(monitorCount.getAndSet(0L)).isEqualTo(3);
 
         // Incremental
         scoreDirector.beforeProblemPropertyChanged(entity1);
         entity1.setStringProperty("myProperty2");
         scoreDirector.afterProblemPropertyChanged(entity1);
         scoreDirector.calculateScore();
-        assertEquals(1, monitorCount.get());
+        assertThat(monitorCount.get()).isEqualTo(1);
     }
 
     @TestTemplate
@@ -1499,15 +1511,16 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
 
         Predicate<TestdataLavishEntity> predicate = entity -> Objects.equals(entity, entity1);
 
-        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataLavishSolution.buildSolutionDescriptor(), (factory) -> {
-                    UniConstraintStream<TestdataLavishEntity> base = factory.from(TestdataLavishEntity.class)
-                            .filter(predicate);
-                    return new Constraint[] {
-                            base.penalize("myConstraint1", SimpleScore.ONE),
-                            base.penalize("myConstraint2", SimpleScore.ONE)
-                    };
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataLavishSolution.buildSolutionDescriptor(), (factory) -> {
+                            UniConstraintStream<TestdataLavishEntity> base = factory.from(TestdataLavishEntity.class)
+                                    .filter(predicate);
+                            return new Constraint[] {
+                                    base.penalize("myConstraint1", SimpleScore.ONE),
+                                    base.penalize("myConstraint2", SimpleScore.ONE)
+                            };
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataLavishSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 
@@ -1528,16 +1541,17 @@ public class UniConstraintStreamTest extends AbstractConstraintStreamTest {
         TestdataLavishEntityGroup entityGroup2 = new TestdataLavishEntityGroup("Some Other Group");
         entity2.setEntityGroup(entityGroup2);
 
-        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory = new ConstraintStreamScoreDirectorFactory<>(
-                TestdataLavishSolution.buildSolutionDescriptor(), (factory) -> {
-                    UniConstraintStream<TestdataLavishEntityGroup> base = factory.from(TestdataLavishEntity.class)
-                            .groupBy(TestdataLavishEntity::getEntityGroup);
-                    return new Constraint[] {
-                            base.penalize("myConstraint1", SimpleScore.ONE),
-                            base.filter(e -> !Objects.equals(e, entityGroup1))
-                                    .penalize("myConstraint2", SimpleScore.ONE)
-                    };
-                }, constraintStreamImplType);
+        ConstraintStreamScoreDirectorFactory<TestdataLavishSolution> scoreDirectorFactory =
+                new ConstraintStreamScoreDirectorFactory<>(
+                        TestdataLavishSolution.buildSolutionDescriptor(), (factory) -> {
+                            UniConstraintStream<TestdataLavishEntityGroup> base = factory.from(TestdataLavishEntity.class)
+                                    .groupBy(TestdataLavishEntity::getEntityGroup);
+                            return new Constraint[] {
+                                    base.penalize("myConstraint1", SimpleScore.ONE),
+                                    base.filter(e -> !Objects.equals(e, entityGroup1))
+                                            .penalize("myConstraint2", SimpleScore.ONE)
+                            };
+                        }, constraintStreamImplType);
         InnerScoreDirector<TestdataLavishSolution> scoreDirector = scoreDirectorFactory.buildScoreDirector(false,
                 constraintMatchEnabled);
 

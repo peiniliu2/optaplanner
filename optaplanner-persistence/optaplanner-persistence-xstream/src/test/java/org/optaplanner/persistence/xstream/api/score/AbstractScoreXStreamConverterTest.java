@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 
 package org.optaplanner.persistence.xstream.api.score;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
-import java.io.Serializable;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import org.optaplanner.core.api.score.Score;
 
@@ -41,7 +39,7 @@ public abstract class AbstractScoreXStreamConverterTest {
         String xmlString = xStream.toXML(input);
         W output = (W) xStream.fromXML(xmlString);
 
-        assertEquals(expectedScore, output.getScore());
+        assertThat(output.getScore()).isEqualTo(expectedScore);
         String regex;
         if (expectedScore != null) {
             regex = "<([\\w\\-\\.]+)( id=\"\\d+\")?>" // Start of element
@@ -57,7 +55,7 @@ public abstract class AbstractScoreXStreamConverterTest {
         }
     }
 
-    public static abstract class TestScoreWrapper<S extends Score> implements Serializable {
+    public static abstract class TestScoreWrapper<S extends Score> {
 
         public abstract S getScore();
 

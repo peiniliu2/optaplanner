@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.optaplanner.core.api.domain.solution.PlanningSolution;
+import org.optaplanner.core.api.score.director.ScoreDirector;
 import org.optaplanner.core.impl.domain.entity.descriptor.EntityDescriptor;
 import org.optaplanner.core.impl.domain.solution.descriptor.SolutionDescriptor;
 import org.optaplanner.core.impl.domain.variable.descriptor.GenuineVariableDescriptor;
@@ -35,7 +36,6 @@ import org.optaplanner.core.impl.domain.variable.supply.Demand;
 import org.optaplanner.core.impl.domain.variable.supply.Supply;
 import org.optaplanner.core.impl.domain.variable.supply.SupplyManager;
 import org.optaplanner.core.impl.score.director.InnerScoreDirector;
-import org.optaplanner.core.impl.score.director.ScoreDirector;
 
 /**
  * @param <Solution_> the solution type, the class with the {@link PlanningSolution} annotation
@@ -164,7 +164,8 @@ public class VariableListenerSupport<Solution_> implements SupplyManager {
     }
 
     public void beforeVariableChanged(VariableDescriptor<Solution_> variableDescriptor, Object entity) {
-        List<VariableListenerNotifiable> notifiableList = sourceVariableToNotifiableMap.get(variableDescriptor);
+        List<VariableListenerNotifiable> notifiableList = sourceVariableToNotifiableMap.getOrDefault(variableDescriptor,
+                Collections.emptyList()); // Avoids null for chained swap move on an unchained var.
         for (VariableListenerNotifiable notifiable : notifiableList) {
             Collection<VariableListenerNotification> notificationQueue = notifiable.getNotificationQueue();
             boolean added = notificationQueue.add(

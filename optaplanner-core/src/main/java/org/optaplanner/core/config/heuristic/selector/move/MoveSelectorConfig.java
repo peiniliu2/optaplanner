@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package org.optaplanner.core.config.heuristic.selector.move;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import org.optaplanner.core.config.heuristic.policy.HeuristicConfigPolicy;
+import javax.xml.bind.annotation.XmlSeeAlso;
+
 import org.optaplanner.core.config.heuristic.selector.SelectorConfig;
 import org.optaplanner.core.config.heuristic.selector.common.SelectionCacheType;
 import org.optaplanner.core.config.heuristic.selector.common.SelectionOrder;
@@ -38,6 +38,7 @@ import org.optaplanner.core.config.heuristic.selector.move.generic.chained.SubCh
 import org.optaplanner.core.config.heuristic.selector.move.generic.chained.SubChainSwapMoveSelectorConfig;
 import org.optaplanner.core.config.heuristic.selector.move.generic.chained.TailChainSwapMoveSelectorConfig;
 import org.optaplanner.core.config.util.ConfigUtils;
+import org.optaplanner.core.impl.heuristic.HeuristicConfigPolicy;
 import org.optaplanner.core.impl.heuristic.selector.common.decorator.ComparatorSelectionSorter;
 import org.optaplanner.core.impl.heuristic.selector.common.decorator.SelectionFilter;
 import org.optaplanner.core.impl.heuristic.selector.common.decorator.SelectionProbabilityWeightFactory;
@@ -52,12 +53,19 @@ import org.optaplanner.core.impl.heuristic.selector.move.decorator.SelectedCount
 import org.optaplanner.core.impl.heuristic.selector.move.decorator.ShufflingMoveSelector;
 import org.optaplanner.core.impl.heuristic.selector.move.decorator.SortingMoveSelector;
 
-import com.thoughtworks.xstream.annotations.XStreamImplicit;
 import com.thoughtworks.xstream.annotations.XStreamInclude;
 
 /**
  * General superclass for {@link ChangeMoveSelectorConfig}, etc.
  */
+
+@XmlSeeAlso({
+        UnionMoveSelectorConfig.class, CartesianProductMoveSelectorConfig.class,
+        ChangeMoveSelectorConfig.class, SwapMoveSelectorConfig.class,
+        PillarChangeMoveSelectorConfig.class, PillarSwapMoveSelectorConfig.class,
+        TailChainSwapMoveSelectorConfig.class, KOptMoveSelectorConfig.class,
+        SubChainChangeMoveSelectorConfig.class, SubChainSwapMoveSelectorConfig.class,
+        MoveListFactoryConfig.class, MoveIteratorFactoryConfig.class })
 @XStreamInclude({
         UnionMoveSelectorConfig.class, CartesianProductMoveSelectorConfig.class,
         ChangeMoveSelectorConfig.class, SwapMoveSelectorConfig.class,
@@ -71,8 +79,7 @@ public abstract class MoveSelectorConfig<C extends MoveSelectorConfig> extends S
     protected SelectionCacheType cacheType = null;
     protected SelectionOrder selectionOrder = null;
 
-    @XStreamImplicit(itemFieldName = "filterClass")
-    protected List<Class<? extends SelectionFilter>> filterClassList = null;
+    protected Class<? extends SelectionFilter> filterClass = null;
 
     protected Class<? extends Comparator> sorterComparatorClass = null;
     protected Class<? extends SelectionSorterWeightFactory> sorterWeightFactoryClass = null;
@@ -105,12 +112,12 @@ public abstract class MoveSelectorConfig<C extends MoveSelectorConfig> extends S
         this.selectionOrder = selectionOrder;
     }
 
-    public List<Class<? extends SelectionFilter>> getFilterClassList() {
-        return filterClassList;
+    public Class<? extends SelectionFilter> getFilterClass() {
+        return filterClass;
     }
 
-    public void setFilterClassList(List<Class<? extends SelectionFilter>> filterClassList) {
-        this.filterClassList = filterClassList;
+    public void setFilterClass(Class<? extends SelectionFilter> filterClass) {
+        this.filterClass = filterClass;
     }
 
     public Class<? extends Comparator> getSorterComparatorClass() {
@@ -184,8 +191,8 @@ public abstract class MoveSelectorConfig<C extends MoveSelectorConfig> extends S
         return this;
     }
 
-    public MoveSelectorConfig withFilterClassList(List<Class<? extends SelectionFilter>> filterClassList) {
-        this.filterClassList = filterClassList;
+    public MoveSelectorConfig withFilterClass(Class<? extends SelectionFilter> filterClass) {
+        this.filterClass = filterClass;
         return this;
     }
 
@@ -322,17 +329,14 @@ public abstract class MoveSelectorConfig<C extends MoveSelectorConfig> extends S
             SelectionCacheType minimumCacheType, boolean randomSelection);
 
     private boolean hasFiltering() {
-        return !ConfigUtils.isEmptyCollection(filterClassList);
+        return filterClass != null;
     }
 
     private MoveSelector applyFiltering(SelectionCacheType resolvedCacheType, SelectionOrder resolvedSelectionOrder,
             MoveSelector moveSelector) {
         if (hasFiltering()) {
-            List<SelectionFilter> filterList = new ArrayList<>(filterClassList.size());
-            for (Class<? extends SelectionFilter> filterClass : filterClassList) {
-                filterList.add(ConfigUtils.newInstance(this, "filterClass", filterClass));
-            }
-            moveSelector = new FilteringMoveSelector(moveSelector, filterList);
+            SelectionFilter selectionFilter = ConfigUtils.newInstance(this, "filterClass", filterClass);
+            moveSelector = new FilteringMoveSelector(moveSelector, selectionFilter);
         }
         return moveSelector;
     }
@@ -490,8 +494,7 @@ public abstract class MoveSelectorConfig<C extends MoveSelectorConfig> extends S
     private void inheritCommon(MoveSelectorConfig inheritedConfig) {
         cacheType = ConfigUtils.inheritOverwritableProperty(cacheType, inheritedConfig.getCacheType());
         selectionOrder = ConfigUtils.inheritOverwritableProperty(selectionOrder, inheritedConfig.getSelectionOrder());
-        filterClassList = ConfigUtils.inheritOverwritableProperty(
-                filterClassList, inheritedConfig.getFilterClassList());
+        filterClass = ConfigUtils.inheritOverwritableProperty(filterClass, inheritedConfig.getFilterClass());
         sorterComparatorClass = ConfigUtils.inheritOverwritableProperty(
                 sorterComparatorClass, inheritedConfig.getSorterComparatorClass());
         sorterWeightFactoryClass = ConfigUtils.inheritOverwritableProperty(

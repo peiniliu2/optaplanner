@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,15 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 import java.util.List;
 
-import org.optaplanner.core.config.heuristic.policy.HeuristicConfigPolicy;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+
 import org.optaplanner.core.config.heuristic.selector.common.SelectionCacheType;
 import org.optaplanner.core.config.heuristic.selector.common.SelectionOrder;
 import org.optaplanner.core.config.heuristic.selector.entity.pillar.PillarSelectorConfig;
 import org.optaplanner.core.config.util.ConfigUtils;
 import org.optaplanner.core.impl.domain.variable.descriptor.GenuineVariableDescriptor;
+import org.optaplanner.core.impl.heuristic.HeuristicConfigPolicy;
 import org.optaplanner.core.impl.heuristic.selector.entity.pillar.PillarSelector;
 import org.optaplanner.core.impl.heuristic.selector.move.MoveSelector;
 import org.optaplanner.core.impl.heuristic.selector.move.generic.PillarSwapMoveSelector;
@@ -36,10 +39,14 @@ import com.thoughtworks.xstream.annotations.XStreamImplicit;
 @XStreamAlias("pillarSwapMoveSelector")
 public class PillarSwapMoveSelectorConfig extends AbstractPillarMoveSelectorConfig<PillarSwapMoveSelectorConfig> {
 
+    public static final String XML_ELEMENT_NAME = "pillarSwapMoveSelector";
+
+    @XmlElement(name = "secondaryPillarSelector")
     @XStreamAlias("secondaryPillarSelector")
     private PillarSelectorConfig secondaryPillarSelectorConfig = null;
 
-    // TODO Wrap in <variableNameIncludes> https://issues.redhat.com/browse/PLANNER-838
+    @XmlElementWrapper(name = "variableNameIncludes")
+    @XmlElement(name = "variableNameInclude")
     @XStreamImplicit(itemFieldName = "variableNameInclude")
     //    @XStreamAlias("variableNameIncludes")
     //    @XStreamConverter(value = NamedCollectionConverter.class,

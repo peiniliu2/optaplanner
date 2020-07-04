@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import org.optaplanner.core.api.domain.entity.PinningFilter;
 import org.optaplanner.core.api.domain.entity.PlanningEntity;
 import org.optaplanner.core.api.domain.entity.PlanningPin;
 import org.optaplanner.core.api.domain.solution.PlanningSolution;
@@ -39,6 +40,7 @@ import org.optaplanner.core.api.domain.variable.AnchorShadowVariable;
 import org.optaplanner.core.api.domain.variable.CustomShadowVariable;
 import org.optaplanner.core.api.domain.variable.InverseRelationShadowVariable;
 import org.optaplanner.core.api.domain.variable.PlanningVariable;
+import org.optaplanner.core.api.score.director.ScoreDirector;
 import org.optaplanner.core.config.heuristic.selector.common.decorator.SelectionSorterOrder;
 import org.optaplanner.core.config.util.ConfigUtils;
 import org.optaplanner.core.impl.domain.common.ReflectionHelper;
@@ -59,7 +61,8 @@ import org.optaplanner.core.impl.heuristic.selector.common.decorator.SelectionSo
 import org.optaplanner.core.impl.heuristic.selector.common.decorator.SelectionSorterWeightFactory;
 import org.optaplanner.core.impl.heuristic.selector.common.decorator.WeightFactorySelectionSorter;
 import org.optaplanner.core.impl.heuristic.selector.entity.decorator.PinEntityFilter;
-import org.optaplanner.core.impl.score.director.ScoreDirector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @param <Solution_> the solution type, the class with the {@link PlanningSolution} annotation
@@ -70,6 +73,8 @@ public class EntityDescriptor<Solution_> {
             PlanningVariable.class,
             InverseRelationShadowVariable.class, AnchorShadowVariable.class,
             CustomShadowVariable.class };
+
+    protected final transient Logger logger = LoggerFactory.getLogger(getClass());
 
     private final SolutionDescriptor<Solution_> solutionDescriptor;
 
@@ -103,6 +108,9 @@ public class EntityDescriptor<Solution_> {
         this.solutionDescriptor = solutionDescriptor;
         this.entityClass = entityClass;
         isInitializedPredicate = this::isInitialized;
+        if (entityClass.getPackage() == null) {
+            logger.warn("The entityClass ({}) should be in a proper java package.", entityClass);
+        }
     }
 
     /**
@@ -151,13 +159,19 @@ public class EntityDescriptor<Solution_> {
     }
 
     private void processMovable(DescriptorPolicy descriptorPolicy, PlanningEntity entityAnnotation) {
-        Class<? extends SelectionFilter> movableEntitySelectionFilterClass = entityAnnotation.movableEntitySelectionFilter();
-        if (movableEntitySelectionFilterClass == PlanningEntity.NullMovableEntitySelectionFilter.class) {
-            movableEntitySelectionFilterClass = null;
-        }
-        if (movableEntitySelectionFilterClass != null) {
-            declaredMovableEntitySelectionFilter = ConfigUtils.newInstance(this,
-                    "movableEntitySelectionFilterClass", movableEntitySelectionFilterClass);
+        Class<? extends PinningFilter> pinningFilterClass = entityAnnotation.pinningFilter();
+        boolean hasPinningFilter = pinningFilterClass != PlanningEntity.NullPinningFilter.class;
+        if (hasPinningFilter) {
+            declaredMovableEntitySelectionFilter = new SelectionFilter() {
+
+                private final PinningFilter pinningFilter =
+                        ConfigUtils.newInstance(this, "pinningFilterClass", pinningFilterClass);
+
+                @Override
+                public boolean accept(ScoreDirector scoreDirector, Object selection) {
+                    return !pinningFilter.accept(scoreDirector.getWorkingSolution(), selection);
+                }
+            };
         }
     }
 
@@ -568,9 +582,9 @@ public class EntityDescriptor<Solution_> {
     /**
      * @param scoreDirector never null
      * @param entity never null
-     * @return true if the entity is initialized or immovable
+     * @return true if the entity is initialized or pinned
      */
-    public boolean isEntityInitializedOrImmovable(ScoreDirector<Solution_> scoreDirector, Object entity) {
+    public boolean isEntityInitializedOrPinned(ScoreDirector<Solution_> scoreDirector, Object entity) {
         return isInitialized(entity) || !isMovable(scoreDirector, entity);
     }
 

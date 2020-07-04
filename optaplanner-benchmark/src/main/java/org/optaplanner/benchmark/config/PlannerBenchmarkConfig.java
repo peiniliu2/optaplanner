@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.regex.Pattern;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.optaplanner.benchmark.api.PlannerBenchmark;
 import org.optaplanner.benchmark.api.PlannerBenchmarkFactory;
 import org.optaplanner.benchmark.config.blueprint.SolverBenchmarkBluePrintConfig;
@@ -48,7 +54,6 @@ import org.optaplanner.benchmark.config.report.BenchmarkReportConfig;
 import org.optaplanner.benchmark.impl.DefaultPlannerBenchmark;
 import org.optaplanner.benchmark.impl.report.BenchmarkReport;
 import org.optaplanner.benchmark.impl.result.PlannerBenchmarkResult;
-import org.optaplanner.core.config.SolverConfigContext;
 import org.optaplanner.core.config.solver.SolverConfig;
 import org.optaplanner.core.config.util.ConfigUtils;
 import org.optaplanner.core.impl.solver.io.XStreamConfigReader;
@@ -70,6 +75,8 @@ import freemarker.template.TemplateException;
  * To read it from XML, use {@link #createFromXmlResource(String)}.
  * To build a {@link PlannerBenchmarkFactory} with it, use {@link PlannerBenchmarkFactory#create(PlannerBenchmarkConfig)}.
  */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement(name = "plannerBenchmark")
 @XStreamAlias("plannerBenchmark")
 public class PlannerBenchmarkConfig {
 
@@ -491,6 +498,7 @@ public class PlannerBenchmarkConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(PlannerBenchmarkConfig.class);
 
+    @XmlTransient
     @XStreamOmitField
     private ClassLoader classLoader = null;
 
@@ -505,14 +513,19 @@ public class PlannerBenchmarkConfig {
     private Long warmUpHoursSpentLimit = null;
     private Long warmUpDaysSpentLimit = null;
 
+    @XmlElement(name = "benchmarkReport")
     @XStreamAlias("benchmarkReport")
     private BenchmarkReportConfig benchmarkReportConfig = null;
 
+    @XmlElement(name = "inheritedSolverBenchmark")
     @XStreamAlias("inheritedSolverBenchmark")
     private SolverBenchmarkConfig inheritedSolverBenchmarkConfig = null;
 
+    @XmlElement(name = "solverBenchmarkBluePrint")
     @XStreamImplicit(itemFieldName = "solverBenchmarkBluePrint")
     private List<SolverBenchmarkBluePrintConfig> solverBenchmarkBluePrintConfigList = null;
+
+    @XmlElement(name = "solverBenchmark")
     @XStreamImplicit(itemFieldName = "solverBenchmark")
     private List<SolverBenchmarkConfig> solverBenchmarkConfigList = null;
 
@@ -663,11 +676,10 @@ public class PlannerBenchmarkConfig {
      * <p>
      * Will be removed in 8.0.
      *
-     * @param solverConfigContext never null
      * @return never null
      */
-    public PlannerBenchmark buildPlannerBenchmark(SolverConfigContext solverConfigContext) {
-        return buildPlannerBenchmark(solverConfigContext, new Object[0]);
+    public PlannerBenchmark buildPlannerBenchmark() {
+        return buildPlannerBenchmark(new Object[0]);
     }
 
     /**
@@ -676,12 +688,10 @@ public class PlannerBenchmarkConfig {
      * <p>
      * Will be removed in 8.0.
      *
-     * @param solverConfigContext never null
      * @param extraProblems never null
      * @return never null
      */
-    public <Solution_> PlannerBenchmark buildPlannerBenchmark(SolverConfigContext solverConfigContext,
-            Solution_[] extraProblems) {
+    public <Solution_> PlannerBenchmark buildPlannerBenchmark(Solution_[] extraProblems) {
         validate();
         generateSolverBenchmarkConfigNames();
         List<SolverBenchmarkConfig> effectiveSolverBenchmarkConfigList = buildEffectiveSolverBenchmarkConfigList();
@@ -696,14 +706,14 @@ public class PlannerBenchmarkConfig {
         plannerBenchmarkResult.setSolverBenchmarkResultList(new ArrayList<>(
                 effectiveSolverBenchmarkConfigList.size()));
         for (SolverBenchmarkConfig solverBenchmarkConfig : effectiveSolverBenchmarkConfigList) {
-            solverBenchmarkConfig.buildSolverBenchmark(solverConfigContext, classLoader, plannerBenchmarkResult, extraProblems);
+            solverBenchmarkConfig.buildSolverBenchmark(classLoader, plannerBenchmarkResult, extraProblems);
         }
 
         BenchmarkReportConfig benchmarkReportConfig_ = benchmarkReportConfig == null ? new BenchmarkReportConfig()
                 : benchmarkReportConfig;
         BenchmarkReport benchmarkReport = benchmarkReportConfig_.buildBenchmarkReport(plannerBenchmarkResult);
         return new DefaultPlannerBenchmark(
-                plannerBenchmarkResult, solverConfigContext, benchmarkDirectory,
+                plannerBenchmarkResult, benchmarkDirectory,
                 buildExecutorService(parallelBenchmarkCount), buildExecutorService(parallelBenchmarkCount),
                 benchmarkReport);
     }

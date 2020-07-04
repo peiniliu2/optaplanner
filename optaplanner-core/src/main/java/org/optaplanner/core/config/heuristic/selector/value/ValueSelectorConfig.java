@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+
 import org.optaplanner.core.api.domain.valuerange.ValueRangeProvider;
 import org.optaplanner.core.api.domain.variable.PlanningVariable;
-import org.optaplanner.core.config.heuristic.policy.HeuristicConfigPolicy;
 import org.optaplanner.core.config.heuristic.selector.SelectorConfig;
 import org.optaplanner.core.config.heuristic.selector.common.SelectionCacheType;
 import org.optaplanner.core.config.heuristic.selector.common.SelectionOrder;
@@ -34,6 +36,7 @@ import org.optaplanner.core.impl.domain.solution.descriptor.SolutionDescriptor;
 import org.optaplanner.core.impl.domain.valuerange.descriptor.EntityIndependentValueRangeDescriptor;
 import org.optaplanner.core.impl.domain.valuerange.descriptor.ValueRangeDescriptor;
 import org.optaplanner.core.impl.domain.variable.descriptor.GenuineVariableDescriptor;
+import org.optaplanner.core.impl.heuristic.HeuristicConfigPolicy;
 import org.optaplanner.core.impl.heuristic.selector.common.decorator.ComparatorSelectionSorter;
 import org.optaplanner.core.impl.heuristic.selector.common.decorator.SelectionFilter;
 import org.optaplanner.core.impl.heuristic.selector.common.decorator.SelectionProbabilityWeightFactory;
@@ -61,28 +64,30 @@ import org.optaplanner.core.impl.heuristic.selector.value.mimic.ValueMimicRecord
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
-import com.thoughtworks.xstream.annotations.XStreamImplicit;
 
 @XStreamAlias("valueSelector")
 public class ValueSelectorConfig extends SelectorConfig<ValueSelectorConfig> {
 
+    @XmlAttribute
     @XStreamAsAttribute
     protected String id = null;
+    @XmlAttribute
     @XStreamAsAttribute
     protected String mimicSelectorRef = null;
 
     protected Class<?> downcastEntityClass = null;
+    @XmlAttribute
     @XStreamAsAttribute // Works with a nested element input too, which is a BC req in 7.x, but undesired in 8.0
     protected String variableName = null;
 
     protected SelectionCacheType cacheType = null;
     protected SelectionOrder selectionOrder = null;
 
+    @XmlElement(name = "nearbySelection")
     @XStreamAlias("nearbySelection")
     protected NearbySelectionConfig nearbySelectionConfig = null;
 
-    @XStreamImplicit(itemFieldName = "filterClass")
-    protected List<Class<? extends SelectionFilter>> filterClassList = null;
+    protected Class<? extends SelectionFilter> filterClass = null;
 
     protected ValueSorterManner sorterManner = null;
     protected Class<? extends Comparator> sorterComparatorClass = null;
@@ -163,12 +168,12 @@ public class ValueSelectorConfig extends SelectorConfig<ValueSelectorConfig> {
         this.nearbySelectionConfig = nearbySelectionConfig;
     }
 
-    public List<Class<? extends SelectionFilter>> getFilterClassList() {
-        return filterClassList;
+    public Class<? extends SelectionFilter> getFilterClass() {
+        return filterClass;
     }
 
-    public void setFilterClassList(List<Class<? extends SelectionFilter>> filterClassList) {
-        this.filterClassList = filterClassList;
+    public void setFilterClass(Class<? extends SelectionFilter> filterClass) {
+        this.filterClass = filterClass;
     }
 
     public ValueSorterManner getSorterManner() {
@@ -265,9 +270,18 @@ public class ValueSelectorConfig extends SelectorConfig<ValueSelectorConfig> {
     public ValueSelector buildValueSelector(HeuristicConfigPolicy configPolicy,
             EntityDescriptor entityDescriptor,
             SelectionCacheType minimumCacheType, SelectionOrder inheritedSelectionOrder) {
+        return buildValueSelector(configPolicy, entityDescriptor, minimumCacheType, inheritedSelectionOrder,
+                configPolicy.isReinitializeVariableFilterEnabled());
+    }
+
+    public ValueSelector buildValueSelector(HeuristicConfigPolicy configPolicy, EntityDescriptor entityDescriptor,
+            SelectionCacheType minimumCacheType, SelectionOrder inheritedSelectionOrder,
+            boolean applyReinitializeVariableFiltering) {
         if (mimicSelectorRef != null) {
             ValueSelector valueSelector = buildMimicReplaying(configPolicy);
-            valueSelector = applyReinitializeVariableFiltering(configPolicy, valueSelector);
+            if (applyReinitializeVariableFiltering) {
+                valueSelector = new ReinitializeVariableValueSelector(valueSelector);
+            }
             valueSelector = applyDowncasting(configPolicy, valueSelector);
             return valueSelector;
         }
@@ -304,7 +318,9 @@ public class ValueSelectorConfig extends SelectorConfig<ValueSelectorConfig> {
         valueSelector = applyCaching(resolvedCacheType, resolvedSelectionOrder, valueSelector);
         valueSelector = applySelectedLimit(resolvedCacheType, resolvedSelectionOrder, valueSelector);
         valueSelector = applyMimicRecording(configPolicy, valueSelector);
-        valueSelector = applyReinitializeVariableFiltering(configPolicy, valueSelector);
+        if (applyReinitializeVariableFiltering) {
+            valueSelector = new ReinitializeVariableValueSelector(valueSelector);
+        }
         valueSelector = applyDowncasting(configPolicy, valueSelector);
         return valueSelector;
     }
@@ -315,7 +331,7 @@ public class ValueSelectorConfig extends SelectorConfig<ValueSelectorConfig> {
                 || cacheType != null
                 || selectionOrder != null
                 || nearbySelectionConfig != null
-                || filterClassList != null
+                || filterClass != null
                 || sorterManner != null
                 || sorterComparatorClass != null
                 || sorterWeightFactoryClass != null
@@ -404,21 +420,18 @@ public class ValueSelectorConfig extends SelectorConfig<ValueSelectorConfig> {
     }
 
     private boolean hasFiltering(GenuineVariableDescriptor variableDescriptor) {
-        return !ConfigUtils.isEmptyCollection(filterClassList) || variableDescriptor.hasMovableChainedTrailingValueFilter();
+        return filterClass != null || variableDescriptor.hasMovableChainedTrailingValueFilter();
     }
 
     private ValueSelector applyFiltering(SelectionCacheType resolvedCacheType, SelectionOrder resolvedSelectionOrder,
             ValueSelector valueSelector) {
         GenuineVariableDescriptor variableDescriptor = valueSelector.getVariableDescriptor();
         if (hasFiltering(variableDescriptor)) {
-            List<SelectionFilter> filterList = new ArrayList<>(
-                    filterClassList == null ? 1 : filterClassList.size() + 1);
-            if (filterClassList != null) {
-                for (Class<? extends SelectionFilter> filterClass : filterClassList) {
-                    filterList.add(ConfigUtils.newInstance(this, "filterClass", filterClass));
-                }
+            List<SelectionFilter> filterList = new ArrayList<>(filterClass == null ? 1 : 2);
+            if (filterClass != null) {
+                filterList.add(ConfigUtils.newInstance(this, "filterClass", filterClass));
             }
-            // Filter out immovable entities
+            // Filter out pinned entities
             if (variableDescriptor.hasMovableChainedTrailingValueFilter()) {
                 filterList.add(variableDescriptor.getMovableChainedTrailingValueFilter());
             }
@@ -643,14 +656,6 @@ public class ValueSelectorConfig extends SelectorConfig<ValueSelectorConfig> {
                     (EntityIndependentValueSelector) valueSelector);
             configPolicy.addValueMimicRecorder(id, mimicRecordingValueSelector);
             valueSelector = mimicRecordingValueSelector;
-        }
-        return valueSelector;
-    }
-
-    private ValueSelector applyReinitializeVariableFiltering(HeuristicConfigPolicy configPolicy,
-            ValueSelector valueSelector) {
-        if (configPolicy.isReinitializeVariableFilterEnabled()) {
-            valueSelector = new ReinitializeVariableValueSelector(valueSelector);
         }
         return valueSelector;
     }

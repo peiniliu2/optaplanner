@@ -35,11 +35,11 @@ import org.kie.api.definition.rule.Rule;
 import org.kie.api.runtime.KieSession;
 import org.kie.internal.event.rule.RuleEventManager;
 import org.optaplanner.core.api.score.Score;
-import org.optaplanner.core.api.score.holder.AbstractScoreHolder;
 import org.optaplanner.core.api.score.stream.Constraint;
 import org.optaplanner.core.impl.domain.solution.descriptor.SolutionDescriptor;
 import org.optaplanner.core.impl.score.director.drools.DroolsScoreDirector;
 import org.optaplanner.core.impl.score.director.drools.OptaPlannerRuleEventListener;
+import org.optaplanner.core.impl.score.holder.AbstractScoreHolder;
 import org.optaplanner.core.impl.score.stream.ConstraintSession;
 import org.optaplanner.core.impl.score.stream.common.AbstractConstraintSessionFactory;
 import org.optaplanner.core.impl.score.stream.drools.common.DroolsRuleStructure;
@@ -75,10 +75,14 @@ public class DroolsConstraintSessionFactory<Solution_> extends AbstractConstrain
     @Override
     public ConstraintSession<Solution_> buildSession(boolean constraintMatchEnabled, Solution_ workingSolution) {
         // Make sure the constraint justifications match what comes out of Bavet.
-        AbstractScoreHolder scoreHolder = (AbstractScoreHolder) getScoreDefinition().buildScoreHolder(constraintMatchEnabled);
+        AbstractScoreHolder scoreHolder = getScoreDefinition().buildScoreHolder(constraintMatchEnabled);
         scoreHolder.setJustificationListConverter(
-                (justificationList, rule) -> matchJustificationsToOutput((List<Object>) justificationList,
-                        compiledRuleToConstraintMap.get(rule).getExpectedJustificationTypes()));
+                (justificationList, rule) -> {
+                    DroolsConstraint<Solution_> constraint = compiledRuleToConstraintMap.get(rule);
+                    return matchJustificationsToOutput((List<Object>) justificationList,
+                            constraint.getExpectedJustificationCount(),
+                            constraint.getExpectedJustificationTypes());
+                });
         // Determine which rules to enable based on the fact that their constraints carry weight.
         Score<?> zeroScore = getScoreDefinition().getZeroScore();
         Set<String> disabledConstraintIdSet = new LinkedHashSet<>(0);
@@ -125,10 +129,12 @@ public class DroolsConstraintSessionFactory<Solution_> extends AbstractConstrain
      * heuristics inside this method will have to be redesigned.
      *
      * @param justificationList unordered list of justifications coming from the score director
+     * @param expectedCount how many justifications are expected to be returned (1 for uni stream, 2 for bi stream, ...)
      * @param expectedTypes as defined by {@link DroolsRuleStructure#getExpectedJustificationTypes()}
      * @return never null
      */
-    private static List<Object> matchJustificationsToOutput(List<Object> justificationList, Class... expectedTypes) {
+    private static List<Object> matchJustificationsToOutput(List<Object> justificationList, int expectedCount,
+            Class... expectedTypes) {
         if (expectedTypes.length == 0) {
             throw new IllegalStateException("Impossible: there are no 0-cardinality constraint streams.");
         }
@@ -164,11 +170,17 @@ public class DroolsConstraintSessionFactory<Solution_> extends AbstractConstrain
         }
         Object item = matching[0];
         Class expectedType = expectedTypes[0];
-        if (FactTuple.class.isAssignableFrom(expectedType)) {
-            // The justifications will all come from a single tuple (eg. BiTuple<A, B>).
-            return ((FactTuple) item).asList();
+        if (FactTuple.class.isAssignableFrom(expectedType) || item instanceof FactTuple) {
+            /*
+             * The justifications will all come from a single tuple (eg. BiTuple<A, B>).
+             * If stream cardinality < tuple cardinality, we will ignore some of the later elements in the tuple.
+             * This happens when we're doing a groupBy() without any collectors - in that case, the latter
+             * elements of the tuple will be dummy collector(s).
+             */
+            return ((FactTuple) item).asList()
+                    .subList(0, expectedCount);
         } else {
-            // This comes from a uni stream.
+            // This comes from a simple uni stream.
             return Collections.singletonList(item);
         }
     }

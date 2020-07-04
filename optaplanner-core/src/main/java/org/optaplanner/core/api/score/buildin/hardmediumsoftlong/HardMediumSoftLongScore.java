@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import java.util.Objects;
 
 import org.optaplanner.core.api.domain.solution.PlanningSolution;
 import org.optaplanner.core.api.score.AbstractScore;
-import org.optaplanner.core.api.score.FeasibilityScore;
 import org.optaplanner.core.api.score.Score;
 
 /**
@@ -33,8 +32,7 @@ import org.optaplanner.core.api.score.Score;
  *
  * @see Score
  */
-public final class HardMediumSoftLongScore extends AbstractScore<HardMediumSoftLongScore>
-        implements FeasibilityScore<HardMediumSoftLongScore> {
+public final class HardMediumSoftLongScore extends AbstractScore<HardMediumSoftLongScore> {
 
     public static final HardMediumSoftLongScore ZERO = new HardMediumSoftLongScore(0, 0L, 0L, 0L);
     public static final HardMediumSoftLongScore ONE_HARD = new HardMediumSoftLongScore(0, 1L, 0L, 0L);
@@ -58,24 +56,7 @@ public final class HardMediumSoftLongScore extends AbstractScore<HardMediumSoftL
         return new HardMediumSoftLongScore(initScore, hardScore, mediumScore, softScore);
     }
 
-    /**
-     * @deprecated in favor of {@link #ofUninitialized(int, long, long, long)}
-     */
-    @Deprecated
-    public static HardMediumSoftLongScore valueOfUninitialized(int initScore, long hardScore, long mediumScore,
-            long softScore) {
-        return new HardMediumSoftLongScore(initScore, hardScore, mediumScore, softScore);
-    }
-
     public static HardMediumSoftLongScore of(long hardScore, long mediumScore, long softScore) {
-        return new HardMediumSoftLongScore(0, hardScore, mediumScore, softScore);
-    }
-
-    /**
-     * @deprecated in favor of {@link #of(long, long, long)}
-     */
-    @Deprecated
-    public static HardMediumSoftLongScore valueOf(long hardScore, long mediumScore, long softScore) {
         return new HardMediumSoftLongScore(0, hardScore, mediumScore, softScore);
     }
 
@@ -161,13 +142,7 @@ public final class HardMediumSoftLongScore extends AbstractScore<HardMediumSoftL
     // ************************************************************************
 
     @Override
-    public HardMediumSoftLongScore toInitializedScore() {
-        return initScore == 0 ? this : new HardMediumSoftLongScore(0, hardScore, mediumScore, softScore);
-    }
-
-    @Override
     public HardMediumSoftLongScore withInitScore(int newInitScore) {
-        assertNoInitScore();
         return new HardMediumSoftLongScore(newInitScore, hardScore, mediumScore, softScore);
     }
 
@@ -277,11 +252,6 @@ public final class HardMediumSoftLongScore extends AbstractScore<HardMediumSoftL
     @Override
     public String toString() {
         return getInitPrefix() + hardScore + HARD_LABEL + "/" + mediumScore + MEDIUM_LABEL + "/" + softScore + SOFT_LABEL;
-    }
-
-    @Override
-    public boolean isCompatibleArithmeticArgument(Score otherScore) {
-        return otherScore instanceof HardMediumSoftLongScore;
     }
 
 }

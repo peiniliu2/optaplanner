@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,9 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.kie.api.KieBase;
-import org.kie.api.builder.model.KieSessionModel;
 import org.kie.api.definition.KiePackage;
 import org.kie.api.definition.rule.Global;
 import org.kie.api.definition.rule.Rule;
-import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.optaplanner.core.api.domain.constraintweight.ConstraintWeight;
 import org.optaplanner.core.api.domain.solution.PlanningSolution;
@@ -46,55 +44,20 @@ import org.optaplanner.core.impl.score.director.ScoreDirectorFactory;
  */
 public class DroolsScoreDirectorFactory<Solution_> extends AbstractScoreDirectorFactory<Solution_> {
 
-    protected final KieContainer kieContainer;
-    protected final String ksessionName;
+    private final KieBase kieBase;
 
     protected Map<Rule, Function<Solution_, Score<?>>> ruleToConstraintWeightExtractorMap;
 
     /**
      * @param solutionDescriptor never null
-     *        For {@link LegacyDroolsScoreDirectorFactory} only. Do not use.
      * @param kieBase never null
      */
-    protected DroolsScoreDirectorFactory(SolutionDescriptor<Solution_> solutionDescriptor, KieBase kieBase) {
+    public DroolsScoreDirectorFactory(SolutionDescriptor<Solution_> solutionDescriptor, KieBase kieBase) {
         super(solutionDescriptor);
-        kieContainer = null;
-        ksessionName = null;
-        solutionDescriptor.checkIfProblemFactsExist();
-    }
-
-    /**
-     * @param solutionDescriptor never null
-     * @param kieContainer never null
-     * @param ksessionName null if the default ksession should be used
-     */
-    public DroolsScoreDirectorFactory(SolutionDescriptor<Solution_> solutionDescriptor,
-            KieContainer kieContainer, String ksessionName) {
-        super(solutionDescriptor);
-        this.kieContainer = kieContainer;
-        this.ksessionName = ksessionName;
-        solutionDescriptor.checkIfProblemFactsExist();
-        // if ksessionName is null, then the default kieSession is used
-        KieSessionModel kieSessionModel = kieContainer.getKieSessionModel(ksessionName);
-        if (kieSessionModel == null) {
-            if (ksessionName == null) {
-                throw new IllegalArgumentException("The kieContainer does not have a default ksession"
-                        + " and the ksessionName (" + ksessionName + ") is not specified.");
-            } else {
-                throw new IllegalArgumentException("The kieContainer does not contain a ksessionName ("
-                        + ksessionName + ") with that name.");
-            }
-        }
-        if (kieSessionModel.getType() != KieSessionModel.KieSessionType.STATEFUL) {
-            throw new IllegalStateException("The ksessionName (" + ksessionName
-                    + ") with type (" + kieSessionModel.getType() + ") is not stateful.\n"
-                    + "Stateless sessions are not allowed because they don't support incremental score calculation"
-                    + " and are therefore exponentially slower.");
-        }
-        String kbaseName = kieSessionModel.getKieBaseModel().getName();
-        KieBase kieBase = kieContainer.newKieBase(kbaseName, null);
+        this.kieBase = kieBase;
         checkIfGlobalScoreHolderExists(kieBase);
         createRuleToConstraintWeightExtractorMap(kieBase);
+        solutionDescriptor.checkIfProblemFactsExist();
     }
 
     protected void checkIfGlobalScoreHolderExists(KieBase kieBase) {
@@ -154,17 +117,6 @@ public class DroolsScoreDirectorFactory<Solution_> extends AbstractScoreDirector
         }
     }
 
-    public KieContainer getKieContainer() {
-        return kieContainer;
-    }
-
-    /**
-     * @return null if the default ksession should be used
-     */
-    public String getKsessionName() {
-        return ksessionName;
-    }
-
     public Map<Rule, Function<Solution_, Score<?>>> getRuleToConstraintWeightExtractorMap() {
         return ruleToConstraintWeightExtractorMap;
     }
@@ -180,7 +132,7 @@ public class DroolsScoreDirectorFactory<Solution_> extends AbstractScoreDirector
     }
 
     public KieSession newKieSession() {
-        return kieContainer.newKieSession(ksessionName);
+        return kieBase.newKieSession();
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,23 @@
 
 package org.optaplanner.core.config.constructionheuristic.placer;
 
+import javax.xml.bind.annotation.XmlSeeAlso;
+
 import org.optaplanner.core.config.AbstractConfig;
-import org.optaplanner.core.config.heuristic.policy.HeuristicConfigPolicy;
 import org.optaplanner.core.impl.constructionheuristic.placer.EntityPlacer;
+import org.optaplanner.core.impl.heuristic.HeuristicConfigPolicy;
 
 import com.thoughtworks.xstream.annotations.XStreamInclude;
 
 /**
  * General superclass for {@link QueuedEntityPlacerConfig} and {@link PooledEntityPlacerConfig}.
  */
+
+@XmlSeeAlso({
+        QueuedEntityPlacerConfig.class,
+        QueuedValuePlacerConfig.class,
+        PooledEntityPlacerConfig.class
+})
 @XStreamInclude({
         QueuedEntityPlacerConfig.class,
         QueuedValuePlacerConfig.class,

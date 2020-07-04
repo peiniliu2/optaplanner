@@ -537,7 +537,6 @@ In this instance, `Termination` once a feasible solution has been reached is not
 === `BestScoreFeasibleTermination`
 
 Terminates as soon as a feasible solution has been discovered.
-Requires that `Score` implements `FeasibilityScore`.
 
 [source,xml,options="nowrap"]
 ----
@@ -797,7 +796,7 @@ add the `customProperties` element and use <<customPropertiesConfiguration,custo
   <customPhase>
     <customPhaseCommandClass>...MyCustomPhase</customPhaseCommandClass>
     <customProperties>
-      <mySelectionSize>5</mySelectionSize>
+      <property name="mySelectionSize" value="5"/>
     </customProperties>
   </customPhase>
 ----

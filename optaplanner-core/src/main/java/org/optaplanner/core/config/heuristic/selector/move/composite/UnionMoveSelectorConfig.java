@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.optaplanner.core.config.heuristic.policy.HeuristicConfigPolicy;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElements;
+
 import org.optaplanner.core.config.heuristic.selector.common.SelectionCacheType;
 import org.optaplanner.core.config.heuristic.selector.common.SelectionOrder;
 import org.optaplanner.core.config.heuristic.selector.move.MoveSelectorConfig;
+import org.optaplanner.core.config.heuristic.selector.move.factory.MoveIteratorFactoryConfig;
+import org.optaplanner.core.config.heuristic.selector.move.factory.MoveListFactoryConfig;
+import org.optaplanner.core.config.heuristic.selector.move.generic.ChangeMoveSelectorConfig;
+import org.optaplanner.core.config.heuristic.selector.move.generic.PillarChangeMoveSelectorConfig;
+import org.optaplanner.core.config.heuristic.selector.move.generic.PillarSwapMoveSelectorConfig;
+import org.optaplanner.core.config.heuristic.selector.move.generic.SwapMoveSelectorConfig;
+import org.optaplanner.core.config.heuristic.selector.move.generic.chained.KOptMoveSelectorConfig;
+import org.optaplanner.core.config.heuristic.selector.move.generic.chained.SubChainChangeMoveSelectorConfig;
+import org.optaplanner.core.config.heuristic.selector.move.generic.chained.SubChainSwapMoveSelectorConfig;
+import org.optaplanner.core.config.heuristic.selector.move.generic.chained.TailChainSwapMoveSelectorConfig;
 import org.optaplanner.core.config.util.ConfigUtils;
+import org.optaplanner.core.impl.heuristic.HeuristicConfigPolicy;
 import org.optaplanner.core.impl.heuristic.selector.common.decorator.FixedSelectorProbabilityWeightFactory;
 import org.optaplanner.core.impl.heuristic.selector.common.decorator.SelectionProbabilityWeightFactory;
 import org.optaplanner.core.impl.heuristic.selector.move.MoveSelector;
@@ -37,6 +50,27 @@ import com.thoughtworks.xstream.annotations.XStreamImplicit;
 @XStreamAlias("unionMoveSelector")
 public class UnionMoveSelectorConfig extends MoveSelectorConfig<UnionMoveSelectorConfig> {
 
+    public static final String XML_ELEMENT_NAME = "unionMoveSelector";
+
+    @XmlElements({
+            @XmlElement(name = CartesianProductMoveSelectorConfig.XML_ELEMENT_NAME,
+                    type = CartesianProductMoveSelectorConfig.class),
+            @XmlElement(name = ChangeMoveSelectorConfig.XML_ELEMENT_NAME, type = ChangeMoveSelectorConfig.class),
+            @XmlElement(name = KOptMoveSelectorConfig.XML_ELEMENT_NAME, type = KOptMoveSelectorConfig.class),
+            @XmlElement(name = MoveIteratorFactoryConfig.XML_ELEMENT_NAME, type = MoveIteratorFactoryConfig.class),
+            @XmlElement(name = MoveListFactoryConfig.XML_ELEMENT_NAME, type = MoveListFactoryConfig.class),
+            @XmlElement(name = PillarChangeMoveSelectorConfig.XML_ELEMENT_NAME,
+                    type = PillarChangeMoveSelectorConfig.class),
+            @XmlElement(name = PillarSwapMoveSelectorConfig.XML_ELEMENT_NAME, type = PillarSwapMoveSelectorConfig.class),
+            @XmlElement(name = SubChainChangeMoveSelectorConfig.XML_ELEMENT_NAME,
+                    type = SubChainChangeMoveSelectorConfig.class),
+            @XmlElement(name = SubChainSwapMoveSelectorConfig.XML_ELEMENT_NAME,
+                    type = SubChainSwapMoveSelectorConfig.class),
+            @XmlElement(name = SwapMoveSelectorConfig.XML_ELEMENT_NAME, type = SwapMoveSelectorConfig.class),
+            @XmlElement(name = TailChainSwapMoveSelectorConfig.XML_ELEMENT_NAME,
+                    type = TailChainSwapMoveSelectorConfig.class),
+            @XmlElement(name = UnionMoveSelectorConfig.XML_ELEMENT_NAME, type = UnionMoveSelectorConfig.class)
+    })
     @XStreamImplicit()
     private List<MoveSelectorConfig> moveSelectorConfigList = null;
 

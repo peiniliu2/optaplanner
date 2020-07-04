@@ -19,7 +19,6 @@ package org.optaplanner.core.impl.score.buildin.simple;
 import java.util.Arrays;
 
 import org.optaplanner.core.api.score.buildin.simple.SimpleScore;
-import org.optaplanner.core.api.score.buildin.simple.SimpleScoreHolder;
 import org.optaplanner.core.config.score.trend.InitializingScoreTrendLevel;
 import org.optaplanner.core.impl.score.definition.AbstractScoreDefinition;
 import org.optaplanner.core.impl.score.trend.InitializingScoreTrend;
@@ -37,6 +36,11 @@ public class SimpleScoreDefinition extends AbstractScoreDefinition<SimpleScore> 
     @Override
     public int getLevelsSize() {
         return 1;
+    }
+
+    @Override
+    public int getFeasibleLevelsSize() {
+        return 0;
     }
 
     @Override
@@ -74,8 +78,8 @@ public class SimpleScoreDefinition extends AbstractScoreDefinition<SimpleScore> 
     }
 
     @Override
-    public SimpleScoreHolder buildScoreHolder(boolean constraintMatchEnabled) {
-        return new SimpleScoreHolder(constraintMatchEnabled);
+    public SimpleScoreHolderImpl buildScoreHolder(boolean constraintMatchEnabled) {
+        return new SimpleScoreHolderImpl(constraintMatchEnabled);
     }
 
     @Override

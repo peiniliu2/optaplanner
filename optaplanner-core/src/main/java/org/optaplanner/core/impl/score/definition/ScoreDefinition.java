@@ -18,11 +18,11 @@ package org.optaplanner.core.impl.score.definition;
 
 import org.optaplanner.core.api.score.Score;
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
-import org.optaplanner.core.api.score.holder.ScoreHolder;
+import org.optaplanner.core.api.score.director.ScoreDirector;
 import org.optaplanner.core.impl.score.ScoreUtils;
 import org.optaplanner.core.impl.score.buildin.hardsoft.HardSoftScoreDefinition;
-import org.optaplanner.core.impl.score.director.ScoreDirector;
 import org.optaplanner.core.impl.score.director.drools.DroolsScoreDirector;
+import org.optaplanner.core.impl.score.holder.AbstractScoreHolder;
 import org.optaplanner.core.impl.score.inliner.ScoreInliner;
 import org.optaplanner.core.impl.score.stream.bavet.BavetConstraintFactory;
 import org.optaplanner.core.impl.score.trend.InitializingScoreTrend;
@@ -50,6 +50,14 @@ public interface ScoreDefinition<S extends Score<S>> {
      * @return at least 1
      */
     int getLevelsSize();
+
+    /**
+     * Returns the number of levels of {@link Score#toLevelNumbers()}.
+     * that are used to determine {@link Score#isFeasible()}.
+     *
+     * @return at least 0, at most {@link #getLevelsSize()}
+     */
+    int getFeasibleLevelsSize();
 
     /**
      * Returns a label for each score level. Each label includes the suffix "score" and must start in lower case.
@@ -142,7 +150,7 @@ public interface ScoreDefinition<S extends Score<S>> {
      * @param constraintMatchEnabled true if {@link ScoreDirector#isConstraintMatchEnabled()} should be true
      * @return never null
      */
-    ScoreHolder<S> buildScoreHolder(boolean constraintMatchEnabled);
+    AbstractScoreHolder<S> buildScoreHolder(boolean constraintMatchEnabled);
 
     /**
      * Builds a {@link Score} which is equal or better than any other {@link Score} with more variables initialized
@@ -176,5 +184,12 @@ public interface ScoreDefinition<S extends Score<S>> {
      * @return this / divisor
      */
     S divideBySanitizedDivisor(S dividend, S divisor);
+
+    /**
+     * @param score never null
+     * @return true if the otherScore is accepted as a parameter of {@link Score#add(Score)},
+     *         {@link Score#subtract(Score)} and {@link Score#compareTo(Object)} for scores of this score definition.
+     */
+    boolean isCompatibleArithmeticArgument(Score score);
 
 }

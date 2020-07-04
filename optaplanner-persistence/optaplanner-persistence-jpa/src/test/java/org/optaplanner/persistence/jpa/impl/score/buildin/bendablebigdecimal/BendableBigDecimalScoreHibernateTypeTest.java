@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.TypeDef;
 import org.junit.jupiter.api.Test;
 import org.optaplanner.core.api.score.buildin.bendablebigdecimal.BendableBigDecimalScore;
-import org.optaplanner.persistence.jpa.impl.score.AbstractScoreHibernateTypeTest;
+import org.optaplanner.persistence.jpa.AbstractScoreJpaTest;
 
-public class BendableBigDecimalScoreHibernateTypeTest extends AbstractScoreHibernateTypeTest {
+public class BendableBigDecimalScoreHibernateTypeTest extends AbstractScoreJpaTest {
 
     @Test
     public void persistAndMerge() {
@@ -44,10 +44,18 @@ public class BendableBigDecimalScoreHibernateTypeTest extends AbstractScoreHiber
     }
 
     @Entity
-    @TypeDef(defaultForType = BendableBigDecimalScore.class, typeClass = BendableBigDecimalScoreHibernateType.class, parameters = {
-            @Parameter(name = "hardLevelsSize", value = "3"), @Parameter(name = "softLevelsSize", value = "2") })
-    public static class TestJpaEntity extends AbstractScoreHibernateTypeTest.AbstractTestJpaEntity<BendableBigDecimalScore> {
+    @TypeDef(defaultForType = BendableBigDecimalScore.class, typeClass = BendableBigDecimalScoreHibernateType.class,
+            parameters = {
+                    @Parameter(name = "hardLevelsSize", value = "3"), @Parameter(name = "softLevelsSize", value = "2") })
+    public static class TestJpaEntity extends AbstractTestJpaEntity<BendableBigDecimalScore> {
 
+        @Columns(columns = {
+                @Column(name = "initScore"),
+                @Column(name = "hard0Score", precision = 10, scale = 5),
+                @Column(name = "hard1Score", precision = 10, scale = 5),
+                @Column(name = "hard2Score", precision = 10, scale = 5),
+                @Column(name = "soft0Score", precision = 10, scale = 5),
+                @Column(name = "soft1Score", precision = 10, scale = 5) })
         protected BendableBigDecimalScore score;
 
         private TestJpaEntity() {
@@ -58,13 +66,6 @@ public class BendableBigDecimalScoreHibernateTypeTest extends AbstractScoreHiber
         }
 
         @Override
-        @Columns(columns = {
-                @Column(name = "initScore"),
-                @Column(name = "hard0Score", precision = 10, scale = 5),
-                @Column(name = "hard1Score", precision = 10, scale = 5),
-                @Column(name = "hard2Score", precision = 10, scale = 5),
-                @Column(name = "soft0Score", precision = 10, scale = 5),
-                @Column(name = "soft1Score", precision = 10, scale = 5) })
         public BendableBigDecimalScore getScore() {
             return score;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package org.optaplanner.core.api.score;
 
 import org.optaplanner.core.api.domain.solution.PlanningSolution;
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
+import org.optaplanner.core.api.score.buildin.simple.SimpleScore;
+import org.optaplanner.core.api.score.buildin.simplebigdecimal.SimpleBigDecimalScore;
+import org.optaplanner.core.api.score.buildin.simplelong.SimpleLongScore;
 import org.optaplanner.core.impl.score.definition.ScoreDefinition;
 
 /**
@@ -57,18 +60,10 @@ public interface Score<Score_ extends Score> extends Comparable<Score_> {
     boolean isSolutionInitialized();
 
     /**
-     * For example {@code -7init/0hard/-8soft} returns {@code 0hard/-8soft}.
-     *
-     * @return equal score except that {@link #getInitScore()} is {@code 0}.
-     */
-    Score_ toInitializedScore();
-
-    /**
      * For example {@code 0hard/-8soft} with {@code -7} returns {@code -7init/0hard/-8soft}.
      *
      * @param newInitScore always negative (except in statistical calculations), 0 if all planning variables are initialized
      * @return equals score except that {@link #getInitScore()} is set to {@code newInitScore}
-     * @throws IllegalStateException if the original {@link #getInitScore()} is not 0
      */
     Score_ withInitScore(int newInitScore);
 
@@ -149,11 +144,15 @@ public interface Score<Score_ extends Score> extends Comparable<Score_> {
     Number[] toLevelNumbers();
 
     /**
-     * @param otherScore never null
-     * @return true if the otherScore is accepted as a parameter of {@link #add(Score)}, {@link #subtract(Score)}
-     *         and {@link #compareTo(Object)}.
+     * A {@link PlanningSolution} is feasible if it has no broken hard constraints
+     * and {@link #isSolutionInitialized()} is true.
+     *
+     * Simple scores ({@link SimpleScore}, {@link SimpleLongScore}, {@link SimpleBigDecimalScore}) are always feasible,
+     * if their {@link #getInitScore()} is 0.
+     *
+     * @return true if the hard score is 0 or higher and the {@link #getInitScore()} is 0.
      */
-    boolean isCompatibleArithmeticArgument(Score otherScore);
+    boolean isFeasible();
 
     /**
      * Like {@link Object#toString()}, but trims score levels which have a zero weight.

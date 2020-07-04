@@ -1,11 +1,11 @@
 /*
- * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,11 +28,11 @@ import org.optaplanner.core.api.domain.solution.PlanningSolution;
 import org.optaplanner.core.api.score.Score;
 import org.optaplanner.core.api.score.constraint.ConstraintMatchTotal;
 import org.optaplanner.core.api.score.constraint.Indictment;
-import org.optaplanner.core.api.score.holder.ScoreHolder;
+import org.optaplanner.core.api.score.director.ScoreDirector;
 import org.optaplanner.core.impl.domain.entity.descriptor.EntityDescriptor;
 import org.optaplanner.core.impl.domain.variable.descriptor.VariableDescriptor;
 import org.optaplanner.core.impl.score.director.AbstractScoreDirector;
-import org.optaplanner.core.impl.score.director.ScoreDirector;
+import org.optaplanner.core.impl.score.holder.AbstractScoreHolder;
 
 /**
  * Drools implementation of {@link ScoreDirector}, which directs the Rule Engine to calculate the {@link Score}
@@ -47,7 +47,7 @@ public class DroolsScoreDirector<Solution_>
     public static final String GLOBAL_SCORE_HOLDER_KEY = "scoreHolder";
 
     protected KieSession kieSession;
-    protected ScoreHolder scoreHolder;
+    protected AbstractScoreHolder scoreHolder;
 
     public DroolsScoreDirector(DroolsScoreDirectorFactory<Solution_> scoreDirectorFactory,
             boolean lookUpEnabled, boolean constraintMatchEnabledPreference) {
@@ -109,17 +109,6 @@ public class DroolsScoreDirector<Solution_>
     @Override
     public boolean isConstraintMatchEnabled() {
         return scoreHolder.isConstraintMatchEnabled();
-    }
-
-    @Override
-    public Collection<ConstraintMatchTotal> getConstraintMatchTotals() {
-        if (workingSolution == null) {
-            throw new IllegalStateException(
-                    "The method setWorkingSolution() must be called before the method getConstraintMatchTotals().");
-        }
-        // Notice that we don't trigger the variable listeners
-        kieSession.fireAllRules();
-        return scoreHolder.getConstraintMatchTotals();
     }
 
     @Override

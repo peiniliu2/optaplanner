@@ -6,8 +6,9 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.optaplanner</groupId>
-    <artifactId>optaplanner</artifactId>
-    <version>7.38.0-SNAPSHOT</version>
+    <artifactId>optaplanner-build-parent</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+    <relativePath>../optaplanner-build-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>optaplanner-docs</artifactId>
@@ -47,7 +48,8 @@
           <configuration>
             <imagesDir>.</imagesDir>
             <attributes>
-              <revnumber>${project.version}</revnumber>
+              <project-version>${project.version}</project-version>
+              <version-org-spring-framework-boot>${version.org.springframework.boot}</version-org-spring-framework-boot>
               <!-- Custom attributes -->
               <codeDir>${project.build.directory}/code</codeDir>
               <COMMUNITY-ONLY/>

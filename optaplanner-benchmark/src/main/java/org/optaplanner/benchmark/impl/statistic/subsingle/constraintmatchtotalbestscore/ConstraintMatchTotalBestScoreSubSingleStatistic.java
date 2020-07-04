@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,8 @@ public class ConstraintMatchTotalBestScoreSubSingleStatistic<Solution_>
         private void localSearchStepEnded(LocalSearchStepScope<Solution_> stepScope) {
             if (constraintMatchEnabled && stepScope.getBestScoreImproved()) {
                 long timeMillisSpent = stepScope.getPhaseScope().calculateSolverTimeMillisSpentUpToNow();
-                for (ConstraintMatchTotal constraintMatchTotal : stepScope.getScoreDirector().getConstraintMatchTotals()) {
+                for (ConstraintMatchTotal constraintMatchTotal : stepScope.getScoreDirector().getConstraintMatchTotalMap()
+                        .values()) {
                     pointList.add(new ConstraintMatchTotalBestScoreStatisticPoint(
                             timeMillisSpent,
                             constraintMatchTotal.getConstraintPackage(),

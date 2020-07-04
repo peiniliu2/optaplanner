@@ -6,9 +6,19 @@ on:
   push:
     branches:
       - master
+      - 7.x
   pull_request:
     branches:
       - master
+      - 7.x
+
+env:
+  # To prevent build failures due to "Connection reset" during artifact download.
+  MVN_CONNECTION_PROPS: -Dmaven.wagon.httpconnectionManager.ttlSeconds=60 -Dmaven.wagon.http.retryHandler.count=5
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   os-java:
@@ -25,7 +35,7 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: Build with Maven
-        run: mvn -B verify
+        run: mvn -B clean install ${{ env.MVN_CONNECTION_PROPS }}
 
   # Early feedback on a compatibility with the newest Java version.
   # TODO: update each time a new major Java version is released.
@@ -39,4 +49,4 @@ jobs:
         with:
           java-version: 14
       - name: Build with Maven
-        run: mvn -B verify
+        run: mvn -B clean install ${{ env.MVN_CONNECTION_PROPS }}

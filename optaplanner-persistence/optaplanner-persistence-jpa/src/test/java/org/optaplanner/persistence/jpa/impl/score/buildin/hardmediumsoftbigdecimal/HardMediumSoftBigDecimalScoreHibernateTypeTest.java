@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import org.hibernate.annotations.Columns;
 import org.hibernate.annotations.TypeDef;
 import org.junit.jupiter.api.Test;
 import org.optaplanner.core.api.score.buildin.hardmediumsoftbigdecimal.HardMediumSoftBigDecimalScore;
-import org.optaplanner.persistence.jpa.impl.score.AbstractScoreHibernateTypeTest;
+import org.optaplanner.persistence.jpa.AbstractScoreJpaTest;
 
-public class HardMediumSoftBigDecimalScoreHibernateTypeTest extends AbstractScoreHibernateTypeTest {
+public class HardMediumSoftBigDecimalScoreHibernateTypeTest extends AbstractScoreJpaTest {
 
     @Test
     public void persistAndMerge() {
@@ -42,6 +42,11 @@ public class HardMediumSoftBigDecimalScoreHibernateTypeTest extends AbstractScor
     @TypeDef(defaultForType = HardMediumSoftBigDecimalScore.class, typeClass = HardMediumSoftBigDecimalScoreHibernateType.class)
     public static class TestJpaEntity extends AbstractTestJpaEntity<HardMediumSoftBigDecimalScore> {
 
+        @Columns(columns = {
+                @Column(name = "initScore"),
+                @Column(name = "hardScore", precision = 10, scale = 5),
+                @Column(name = "mediumScore", precision = 10, scale = 5),
+                @Column(name = "softScore", precision = 10, scale = 5) })
         protected HardMediumSoftBigDecimalScore score;
 
         private TestJpaEntity() {
@@ -52,11 +57,6 @@ public class HardMediumSoftBigDecimalScoreHibernateTypeTest extends AbstractScor
         }
 
         @Override
-        @Columns(columns = {
-                @Column(name = "initScore"),
-                @Column(name = "hardScore", precision = 10, scale = 5),
-                @Column(name = "mediumScore", precision = 10, scale = 5),
-                @Column(name = "softScore", precision = 10, scale = 5) })
         public HardMediumSoftBigDecimalScore getScore() {
             return score;
         }

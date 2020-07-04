@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 package org.optaplanner.core.impl.partitionedsearch;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -46,7 +44,7 @@ import org.optaplanner.core.impl.partitionedsearch.scope.PartitionedSearchPhaseS
 import org.optaplanner.core.impl.phase.event.PhaseLifecycleListenerAdapter;
 import org.optaplanner.core.impl.phase.scope.AbstractPhaseScope;
 import org.optaplanner.core.impl.solver.DefaultSolver;
-import org.optaplanner.core.impl.solver.scope.DefaultSolverScope;
+import org.optaplanner.core.impl.solver.scope.SolverScope;
 import org.optaplanner.core.impl.testdata.domain.TestdataEntity;
 import org.optaplanner.core.impl.testdata.domain.TestdataSolution;
 import org.optaplanner.core.impl.testdata.domain.TestdataValue;
@@ -76,7 +74,7 @@ public class DefaultPartitionedSearchPhaseTest {
         phase.addPhaseLifecycleListener(new PhaseLifecycleListenerAdapter<TestdataSolution>() {
             @Override
             public void phaseStarted(AbstractPhaseScope<TestdataSolution> phaseScope) {
-                assertEquals(Integer.valueOf(partCount), ((PartitionedSearchPhaseScope) phaseScope).getPartCount());
+                assertThat(((PartitionedSearchPhaseScope) phaseScope).getPartCount()).isEqualTo(Integer.valueOf(partCount));
             }
         });
         solver.solve(createSolution(partCount * partSize, 2));
@@ -121,18 +119,15 @@ public class DefaultPartitionedSearchPhaseTest {
 
         TestdataSolution solution = createSolution(partCount * partSize - 1, 100);
         solution.getEntityList().add(new TestdataFaultyEntity("XYZ"));
-        assertEquals(partSize * partCount, solution.getEntityList().size());
+        assertThat(solution.getEntityList().size()).isEqualTo(partSize * partCount);
 
         SolverFactory<TestdataSolution> solverFactory = createSolverFactory(false, SolverConfig.MOVE_THREAD_COUNT_NONE,
                 partSize);
         Solver<TestdataSolution> solver = solverFactory.buildSolver();
-        try {
-            solver.solve(solution);
-            fail("The exception was not propagated.");
-        } catch (IllegalStateException ex) {
-            assertThat(ex).hasMessageMatching(".*partIndex.*Relayed.*");
-            assertThat(ex).hasRootCauseExactlyInstanceOf(TestdataFaultyEntity.TestException.class);
-        }
+        assertThatIllegalStateException()
+                .isThrownBy(() -> solver.solve(solution))
+                .withMessageMatching(".*partIndex.*Relayed.*")
+                .withRootCauseExactlyInstanceOf(TestdataFaultyEntity.TestException.class);
     }
 
     @Test
@@ -150,7 +145,7 @@ public class DefaultPartitionedSearchPhaseTest {
         ((DefaultSolver<TestdataSolution>) solver).addPhaseLifecycleListener(
                 new PhaseLifecycleListenerAdapter<TestdataSolution>() {
                     @Override
-                    public void solvingStarted(DefaultSolverScope<TestdataSolution> solverScope) {
+                    public void solvingStarted(SolverScope<TestdataSolution> solverScope) {
                         solvingStarted.countDown();
                     }
                 });
@@ -162,12 +157,12 @@ public class DefaultPartitionedSearchPhaseTest {
 
         // make sure solver has started solving before terminating early
         solvingStarted.await();
-        assertTrue(solver.terminateEarly());
-        assertTrue(solver.isTerminateEarly());
+        assertThat(solver.terminateEarly()).isTrue();
+        assertThat(solver.isTerminateEarly()).isTrue();
 
         executor.shutdown();
-        assertTrue(executor.awaitTermination(100, TimeUnit.MILLISECONDS));
-        assertNotNull(solutionFuture.get());
+        assertThat(executor.awaitTermination(100, TimeUnit.MILLISECONDS)).isTrue();
+        assertThat(solutionFuture.get()).isNotNull();
     }
 
     @Test
@@ -195,17 +190,15 @@ public class DefaultPartitionedSearchPhaseTest {
         executor.shutdownNow();
 
         // This verifies that PartitionQueue doesn't clear interrupted flag when the main solver thread is interrupted.
-        assertTrue("Executor must terminate successfully when it's shut down abruptly",
-                executor.awaitTermination(100, TimeUnit.MILLISECONDS));
+        assertThat(executor.awaitTermination(100, TimeUnit.MILLISECONDS))
+                .as("Executor must terminate successfully when it's shut down abruptly")
+                .isTrue();
 
         // This verifies that interruption is propagated to caller (wrapped as an IllegalStateException)
-        try {
-            solutionFuture.get();
-            fail("InterruptedException should have been propagated to solver thread.");
-        } catch (ExecutionException ex) {
-            assertThat(ex).hasCause(new IllegalStateException("Solver thread was interrupted in Partitioned Search."));
-            assertThat(ex).hasRootCauseExactlyInstanceOf(InterruptedException.class);
-        }
+        assertThatThrownBy(solutionFuture::get)
+                .isInstanceOf(ExecutionException.class)
+                .hasCause(new IllegalStateException("Solver thread was interrupted in Partitioned Search."))
+                .hasRootCauseExactlyInstanceOf(InterruptedException.class);
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package org.optaplanner.examples.nqueens.solver.tracking;
 
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,8 +29,8 @@ import org.optaplanner.core.api.solver.SolverFactory;
 import org.optaplanner.core.config.heuristic.selector.common.SelectionOrder;
 import org.optaplanner.core.config.heuristic.selector.move.generic.ChangeMoveSelectorConfig;
 import org.optaplanner.core.config.localsearch.LocalSearchPhaseConfig;
-import org.optaplanner.core.config.localsearch.decider.acceptor.AcceptorConfig;
 import org.optaplanner.core.config.localsearch.decider.acceptor.AcceptorType;
+import org.optaplanner.core.config.localsearch.decider.acceptor.LocalSearchAcceptorConfig;
 import org.optaplanner.core.config.localsearch.decider.forager.LocalSearchForagerConfig;
 import org.optaplanner.core.config.solver.SolverConfig;
 import org.optaplanner.core.config.solver.termination.TerminationConfig;
@@ -45,7 +45,7 @@ public class NQueensLocalSearchTrackingTest extends NQueensAbstractTrackingTest 
 
     @ParameterizedTest(name = "AcceptorType: {0}")
     @MethodSource("parameters")
-    public void trackLocalSearch(AcceptorConfig acceptorConfig,
+    public void trackLocalSearch(LocalSearchAcceptorConfig acceptorConfig,
             LocalSearchForagerConfig localSearchForagerConfig,
             List<NQueensStepTracking> expectedCoordinates) {
         SolverConfig solverConfig = SolverConfig.createFromXmlResource(NQueensApp.SOLVER_CONFIG);
@@ -68,7 +68,7 @@ public class NQueensLocalSearchTrackingTest extends NQueensAbstractTrackingTest 
         solver.addPhaseLifecycleListener(listener);
         NQueens bestSolution = solver.solve(problem);
 
-        assertNotNull(bestSolution);
+        assertThat(bestSolution).isNotNull();
         assertTrackingList(expectedCoordinates, listener.getTrackingList());
     }
 
@@ -76,7 +76,7 @@ public class NQueensLocalSearchTrackingTest extends NQueensAbstractTrackingTest 
         Collection<Object[]> params = new ArrayList<>();
 
         params.add(new Object[] {
-                new AcceptorConfig()
+                new LocalSearchAcceptorConfig()
                         .withAcceptorTypeList(Arrays.asList(AcceptorType.HILL_CLIMBING)),
                 new LocalSearchForagerConfig()
                         .withAcceptedCountLimit(N * N),
@@ -87,7 +87,7 @@ public class NQueensLocalSearchTrackingTest extends NQueensAbstractTrackingTest 
                         new NQueensStepTracking(1, 5), new NQueensStepTracking(1, 4),
                         new NQueensStepTracking(1, 5)) });
         params.add(new Object[] {
-                new AcceptorConfig()
+                new LocalSearchAcceptorConfig()
                         .withAcceptorTypeList(Arrays.asList(AcceptorType.ENTITY_TABU))
                         .withEntityTabuSize(N - 1),
                 new LocalSearchForagerConfig()
@@ -99,7 +99,7 @@ public class NQueensLocalSearchTrackingTest extends NQueensAbstractTrackingTest 
                         new NQueensStepTracking(1, 4), new NQueensStepTracking(0, 0),
                         new NQueensStepTracking(4, 1)) });
         params.add(new Object[] {
-                new AcceptorConfig()
+                new LocalSearchAcceptorConfig()
                         .withAcceptorTypeList(Arrays.asList(AcceptorType.LATE_ACCEPTANCE))
                         .withLateAcceptanceSize(1),
                 new LocalSearchForagerConfig()

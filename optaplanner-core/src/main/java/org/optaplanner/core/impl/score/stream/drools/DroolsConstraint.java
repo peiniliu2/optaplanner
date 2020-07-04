@@ -24,7 +24,7 @@ import org.drools.model.PatternDSL;
 import org.drools.model.Rule;
 import org.drools.model.RuleItemBuilder;
 import org.optaplanner.core.api.score.Score;
-import org.optaplanner.core.api.score.holder.AbstractScoreHolder;
+import org.optaplanner.core.impl.score.holder.AbstractScoreHolder;
 import org.optaplanner.core.impl.score.stream.common.AbstractConstraint;
 import org.optaplanner.core.impl.score.stream.common.ScoreImpactType;
 import org.optaplanner.core.impl.score.stream.drools.common.DroolsAbstractConstraintStream;
@@ -69,6 +69,10 @@ public class DroolsConstraint<Solution_> extends AbstractConstraint<Solution_, D
      */
     public Class[] getExpectedJustificationTypes() {
         return scoringStream.getExpectedJustificationTypes();
+    }
+
+    public int getExpectedJustificationCount() {
+        return scoringStream.getCardinality();
     }
 
     @Override

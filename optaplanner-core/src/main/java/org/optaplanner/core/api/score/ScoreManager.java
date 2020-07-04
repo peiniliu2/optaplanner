@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,13 @@ package org.optaplanner.core.api.score;
 
 import org.optaplanner.core.api.domain.solution.PlanningScore;
 import org.optaplanner.core.api.domain.solution.PlanningSolution;
+import org.optaplanner.core.api.score.constraint.ConstraintMatch;
 import org.optaplanner.core.api.score.constraint.ConstraintMatchTotal;
 import org.optaplanner.core.api.score.constraint.Indictment;
 import org.optaplanner.core.api.solver.SolverFactory;
 import org.optaplanner.core.impl.score.DefaultScoreManager;
+import org.optaplanner.core.impl.score.director.easy.EasyScoreCalculator;
+import org.optaplanner.core.impl.solver.DefaultSolverFactory;
 
 /**
  * A stateless service to help calculate {@link Score}, {@link ConstraintMatchTotal},
@@ -47,7 +50,7 @@ public interface ScoreManager<Solution_> {
      * @param <Solution_> the solution type, the class with the {@link PlanningSolution} annotation
      */
     static <Solution_> ScoreManager<Solution_> create(SolverFactory<Solution_> solverFactory) {
-        return new DefaultScoreManager<>(solverFactory.getScoreDirectorFactory());
+        return new DefaultScoreManager<>(((DefaultSolverFactory<Solution_>) solverFactory).getScoreDirectorFactory());
     }
 
     // ************************************************************************
@@ -59,6 +62,34 @@ public interface ScoreManager<Solution_> {
      *
      * @param solution never null
      */
-    void updateScore(Solution_ solution);
+    Score updateScore(Solution_ solution);
+
+    /**
+     * Returns a diagnostic text that explains the solution through the {@link ConstraintMatch} API to identify which
+     * constraints or planning entities cause that score quality.
+     * In case of an {@link Score#isFeasible() infeasible} solution, this can help diagnose the cause of that.
+     * <p>
+     * Do not parse this string.
+     * Instead, to provide this information in a UI or a service, use {@link #explainScore(Object)}
+     * to retrieve {@link ScoreExplanation#getConstraintMatchTotalMap()} and {@link ScoreExplanation#getIndictmentMap()}
+     * and convert those into a domain specific API.
+     *
+     * @param solution never null
+     * @return null if {@link #updateScore(Object)} returns null with the same solution
+     * @throws IllegalStateException when constraint matching is disabled or not supported by the underlying score
+     *         calculator, such as {@link EasyScoreCalculator}.
+     */
+    String getSummary(Solution_ solution);
+
+    /**
+     * Calculates and retrieves {@link ConstraintMatchTotal}s and {@link Indictment}s necessary for describing the
+     * quality of a particular solution.
+     *
+     * @param solution never null
+     * @return never null
+     * @throws IllegalStateException when constraint matching is disabled or not supported by the underlying score
+     *         calculator, such as {@link EasyScoreCalculator}.
+     */
+    ScoreExplanation<Solution_> explainScore(Solution_ solution);
 
 }

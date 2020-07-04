@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.optaplanner.core.impl.domain.valuerange.buildin.temporal.TemporalValu
 /**
  * Factory for {@link ValueRange}.
  */
-public class ValueRangeFactory {
+public final class ValueRangeFactory {
 
     /**
      * Build a {@link CountableValueRange} of both {@code boolean} values.
@@ -209,8 +209,8 @@ public class ValueRangeFactory {
      * @param incrementUnitType never null, must be {@link Temporal#isSupported(TemporalUnit) supported} by {@code from} and
      *        {@code to}
      */
-    public static <Temporal_ extends Temporal & Comparable<? super Temporal_>> CountableValueRange<Temporal_> createTemporalValueRange(
-            Temporal_ from, Temporal_ to, long incrementUnitAmount, TemporalUnit incrementUnitType) {
+    public static <Temporal_ extends Temporal & Comparable<? super Temporal_>> CountableValueRange<Temporal_>
+            createTemporalValueRange(Temporal_ from, Temporal_ to, long incrementUnitAmount, TemporalUnit incrementUnitType) {
         return new TemporalValueRange<>(from, to, incrementUnitAmount, incrementUnitType);
     }
 

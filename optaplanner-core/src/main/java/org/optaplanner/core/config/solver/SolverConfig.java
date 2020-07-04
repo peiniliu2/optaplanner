@@ -1,11 +1,11 @@
 /*
- * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,31 +33,37 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadFactory;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.optaplanner.core.api.domain.solution.PlanningSolution;
 import org.optaplanner.core.api.solver.Solver;
 import org.optaplanner.core.api.solver.SolverFactory;
 import org.optaplanner.core.config.AbstractConfig;
-import org.optaplanner.core.config.SolverConfigContext;
 import org.optaplanner.core.config.constructionheuristic.ConstructionHeuristicPhaseConfig;
-import org.optaplanner.core.config.domain.ScanAnnotatedClassesConfig;
-import org.optaplanner.core.config.heuristic.policy.HeuristicConfigPolicy;
+import org.optaplanner.core.config.exhaustivesearch.ExhaustiveSearchPhaseConfig;
 import org.optaplanner.core.config.localsearch.LocalSearchPhaseConfig;
+import org.optaplanner.core.config.partitionedsearch.PartitionedSearchPhaseConfig;
+import org.optaplanner.core.config.phase.NoChangePhaseConfig;
 import org.optaplanner.core.config.phase.PhaseConfig;
+import org.optaplanner.core.config.phase.custom.CustomPhaseConfig;
 import org.optaplanner.core.config.score.director.ScoreDirectorFactoryConfig;
 import org.optaplanner.core.config.solver.random.RandomType;
 import org.optaplanner.core.config.solver.recaller.BestSolutionRecallerConfig;
 import org.optaplanner.core.config.solver.termination.TerminationConfig;
 import org.optaplanner.core.config.util.ConfigUtils;
 import org.optaplanner.core.impl.domain.solution.descriptor.SolutionDescriptor;
+import org.optaplanner.core.impl.heuristic.HeuristicConfigPolicy;
 import org.optaplanner.core.impl.phase.Phase;
-import org.optaplanner.core.impl.score.definition.ScoreDefinition;
 import org.optaplanner.core.impl.score.director.InnerScoreDirectorFactory;
 import org.optaplanner.core.impl.solver.DefaultSolver;
 import org.optaplanner.core.impl.solver.io.XStreamConfigReader;
 import org.optaplanner.core.impl.solver.random.DefaultRandomFactory;
 import org.optaplanner.core.impl.solver.random.RandomFactory;
 import org.optaplanner.core.impl.solver.recaller.BestSolutionRecaller;
-import org.optaplanner.core.impl.solver.scope.DefaultSolverScope;
+import org.optaplanner.core.impl.solver.scope.SolverScope;
 import org.optaplanner.core.impl.solver.termination.BasicPlumbingTermination;
 import org.optaplanner.core.impl.solver.termination.Termination;
 import org.slf4j.Logger;
@@ -73,6 +79,7 @@ import com.thoughtworks.xstream.converters.ConversionException;
  * To read it from XML, use {@link #createFromXmlResource(String)}.
  * To build a {@link SolverFactory} with it, use {@link SolverFactory#create(SolverConfig)}.
  */
+@XmlRootElement(name = "solver")
 @XStreamAlias("solver")
 public class SolverConfig extends AbstractConfig<SolverConfig> {
 
@@ -220,6 +227,7 @@ public class SolverConfig extends AbstractConfig<SolverConfig> {
 
     private static final Logger logger = LoggerFactory.getLogger(SolverConfig.class);
 
+    @XmlTransient
     @XStreamOmitField
     private ClassLoader classLoader = null;
 
@@ -235,18 +243,28 @@ public class SolverConfig extends AbstractConfig<SolverConfig> {
     protected Integer moveThreadBufferSize = null;
     protected Class<? extends ThreadFactory> threadFactoryClass = null;
 
-    @XStreamAlias("scanAnnotatedClasses")
-    protected ScanAnnotatedClassesConfig scanAnnotatedClassesConfig = null;
     protected Class<?> solutionClass = null;
+    @XmlElement(name = "entityClass")
     @XStreamImplicit(itemFieldName = "entityClass")
     protected List<Class<?>> entityClassList = null;
 
+    @XmlElement(name = "scoreDirectorFactory")
     @XStreamAlias("scoreDirectorFactory")
     protected ScoreDirectorFactoryConfig scoreDirectorFactoryConfig = null;
 
+    @XmlElement(name = "termination")
     @XStreamAlias("termination")
     private TerminationConfig terminationConfig;
 
+    @XmlElements({
+            @XmlElement(name = ConstructionHeuristicPhaseConfig.XML_ELEMENT_NAME,
+                    type = ConstructionHeuristicPhaseConfig.class),
+            @XmlElement(name = CustomPhaseConfig.XML_ELEMENT_NAME, type = CustomPhaseConfig.class),
+            @XmlElement(name = ExhaustiveSearchPhaseConfig.XML_ELEMENT_NAME, type = ExhaustiveSearchPhaseConfig.class),
+            @XmlElement(name = LocalSearchPhaseConfig.XML_ELEMENT_NAME, type = LocalSearchPhaseConfig.class),
+            @XmlElement(name = NoChangePhaseConfig.XML_ELEMENT_NAME, type = NoChangePhaseConfig.class),
+            @XmlElement(name = PartitionedSearchPhaseConfig.XML_ELEMENT_NAME, type = PartitionedSearchPhaseConfig.class)
+    })
     @XStreamImplicit()
     protected List<PhaseConfig> phaseConfigList = null;
 
@@ -277,9 +295,6 @@ public class SolverConfig extends AbstractConfig<SolverConfig> {
      */
     public SolverConfig(SolverConfig inheritedConfig) {
         inherit(inheritedConfig);
-        if (environmentMode == EnvironmentMode.PRODUCTION) {
-            environmentMode = EnvironmentMode.NON_REPRODUCIBLE;
-        }
     }
 
     public ClassLoader getClassLoader() {
@@ -352,14 +367,6 @@ public class SolverConfig extends AbstractConfig<SolverConfig> {
 
     public void setThreadFactoryClass(Class<? extends ThreadFactory> threadFactoryClass) {
         this.threadFactoryClass = threadFactoryClass;
-    }
-
-    public ScanAnnotatedClassesConfig getScanAnnotatedClassesConfig() {
-        return scanAnnotatedClassesConfig;
-    }
-
-    public void setScanAnnotatedClassesConfig(ScanAnnotatedClassesConfig scanAnnotatedClassesConfig) {
-        this.scanAnnotatedClassesConfig = scanAnnotatedClassesConfig;
     }
 
     public Class<?> getSolutionClass() {
@@ -486,9 +493,6 @@ public class SolverConfig extends AbstractConfig<SolverConfig> {
     // ************************************************************************
 
     public EnvironmentMode determineEnvironmentMode() {
-        if (environmentMode == EnvironmentMode.PRODUCTION) {
-            environmentMode = EnvironmentMode.NON_REPRODUCIBLE;
-        }
         return defaultIfNull(environmentMode, EnvironmentMode.REPRODUCIBLE);
     }
 
@@ -511,20 +515,18 @@ public class SolverConfig extends AbstractConfig<SolverConfig> {
      * <p>
      * Will be removed in 8.0 (by putting it in an InnerSolverConfig).
      *
-     * @param configContext never null
      * @param <Solution_> the solution type, the class with the {@link PlanningSolution} annotation
      * @return never null
      */
-    public <Solution_> Solver<Solution_> buildSolver(SolverConfigContext configContext) {
-        configContext.validate();
+    public <Solution_> Solver<Solution_> buildSolver() {
         EnvironmentMode environmentMode_ = determineEnvironmentMode();
         boolean daemon_ = defaultIfNull(daemon, false);
 
         RandomFactory randomFactory = buildRandomFactory(environmentMode_);
         Integer moveThreadCount_ = resolveMoveThreadCount();
-        InnerScoreDirectorFactory<Solution_> scoreDirectorFactory = buildScoreDirectorFactory(configContext, environmentMode_);
+        InnerScoreDirectorFactory<Solution_> scoreDirectorFactory = buildScoreDirectorFactory(environmentMode_);
         boolean constraintMatchEnabledPreference = environmentMode_.isAsserted();
-        DefaultSolverScope<Solution_> solverScope = new DefaultSolverScope<>();
+        SolverScope<Solution_> solverScope = new SolverScope<>();
         solverScope.setScoreDirector(scoreDirectorFactory.buildScoreDirector(true, constraintMatchEnabledPreference));
 
         BestSolutionRecaller<Solution_> bestSolutionRecaller = new BestSolutionRecallerConfig()
@@ -604,19 +606,17 @@ public class SolverConfig extends AbstractConfig<SolverConfig> {
      * <p>
      * Will be removed in 8.0 (by putting it in an InnerSolverConfig).
      *
-     * @param configContext never null
-     * @param environmentMode never null
      * @param <Solution_> the solution type, the class with the {@link PlanningSolution} annotation
+     * @param environmentMode never null
      * @return never null
      */
-    public <Solution_> InnerScoreDirectorFactory<Solution_> buildScoreDirectorFactory(SolverConfigContext configContext,
-            EnvironmentMode environmentMode) {
-        SolutionDescriptor<Solution_> solutionDescriptor = buildSolutionDescriptor(configContext);
+    public <Solution_> InnerScoreDirectorFactory<Solution_> buildScoreDirectorFactory(EnvironmentMode environmentMode) {
+        SolutionDescriptor<Solution_> solutionDescriptor = buildSolutionDescriptor();
         ScoreDirectorFactoryConfig scoreDirectorFactoryConfig_ = scoreDirectorFactoryConfig == null
                 ? new ScoreDirectorFactoryConfig()
                 : scoreDirectorFactoryConfig;
         return scoreDirectorFactoryConfig_.buildScoreDirectorFactory(
-                configContext, classLoader, environmentMode, solutionDescriptor);
+                classLoader, environmentMode, solutionDescriptor);
     }
 
     // TODO https://issues.redhat.com/browse/PLANNER-1688
@@ -628,30 +628,18 @@ public class SolverConfig extends AbstractConfig<SolverConfig> {
      * @param <Solution_> the solution type, the class with the {@link PlanningSolution} annotation
      * @return never null
      */
-    public <Solution_> SolutionDescriptor<Solution_> buildSolutionDescriptor(SolverConfigContext configContext) {
-        ScoreDefinition deprecatedScoreDefinition = scoreDirectorFactoryConfig == null ? null
-                : scoreDirectorFactoryConfig.buildDeprecatedScoreDefinition();
-        if (scanAnnotatedClassesConfig != null) {
-            if (solutionClass != null || entityClassList != null) {
-                throw new IllegalArgumentException("The solver configuration with scanAnnotatedClasses ("
-                        + scanAnnotatedClassesConfig + ") cannot also have a solutionClass (" + solutionClass
-                        + ") or an entityClass (" + entityClassList + ").\n"
-                        + "Maybe delete the scanAnnotatedClasses element in the solver config.");
-            }
-            return scanAnnotatedClassesConfig.buildSolutionDescriptor(configContext, classLoader, deprecatedScoreDefinition);
-        } else {
-            if (solutionClass == null) {
-                throw new IllegalArgumentException("The solver configuration must have a solutionClass (" + solutionClass
-                        + "), if it has no scanAnnotatedClasses (" + scanAnnotatedClassesConfig + ").");
-            }
-            if (ConfigUtils.isEmptyCollection(entityClassList)) {
-                throw new IllegalArgumentException(
-                        "The solver configuration must have at least 1 entityClass (" + entityClassList
-                                + "), if it has no scanAnnotatedClasses (" + scanAnnotatedClassesConfig + ").");
-            }
-            return SolutionDescriptor.buildSolutionDescriptor((Class<Solution_>) solutionClass, entityClassList,
-                    deprecatedScoreDefinition);
+    public <Solution_> SolutionDescriptor<Solution_> buildSolutionDescriptor() {
+        if (solutionClass == null) {
+            throw new IllegalArgumentException("The solver configuration must have a solutionClass (" + solutionClass +
+                    "). If you're using the Quarkus extension or Spring Boot starter, it should have been filled in " +
+                    "already.");
         }
+        if (ConfigUtils.isEmptyCollection(entityClassList)) {
+            throw new IllegalArgumentException("The solver configuration must have at least 1 entityClass (" +
+                    entityClassList + "). If you're using the Quarkus extension or Spring Boot starter, " +
+                    "it should have been filled in already.");
+        }
+        return SolutionDescriptor.buildSolutionDescriptor((Class<Solution_>) solutionClass, entityClassList);
     }
 
     protected <Solution_> List<Phase<Solution_>> buildPhaseList(HeuristicConfigPolicy configPolicy,
@@ -694,8 +682,6 @@ public class SolverConfig extends AbstractConfig<SolverConfig> {
                 inheritedConfig.getMoveThreadBufferSize());
         threadFactoryClass = ConfigUtils.inheritOverwritableProperty(threadFactoryClass,
                 inheritedConfig.getThreadFactoryClass());
-        scanAnnotatedClassesConfig = ConfigUtils.inheritConfig(scanAnnotatedClassesConfig,
-                inheritedConfig.getScanAnnotatedClassesConfig());
         solutionClass = ConfigUtils.inheritOverwritableProperty(solutionClass, inheritedConfig.getSolutionClass());
         entityClassList = ConfigUtils.inheritMergeableListProperty(
                 entityClassList, inheritedConfig.getEntityClassList());

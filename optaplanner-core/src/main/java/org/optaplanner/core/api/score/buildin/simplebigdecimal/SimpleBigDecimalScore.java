@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,23 +46,7 @@ public final class SimpleBigDecimalScore extends AbstractScore<SimpleBigDecimalS
         return new SimpleBigDecimalScore(initScore, score);
     }
 
-    /**
-     * @deprecated in favor of {@link #ofUninitialized(int, BigDecimal)}
-     */
-    @Deprecated
-    public static SimpleBigDecimalScore valueOfUninitialized(int initScore, BigDecimal score) {
-        return new SimpleBigDecimalScore(initScore, score);
-    }
-
     public static SimpleBigDecimalScore of(BigDecimal score) {
-        return new SimpleBigDecimalScore(0, score);
-    }
-
-    /**
-     * @deprecated in favor of {@link #of(BigDecimal)}
-     */
-    @Deprecated
-    public static SimpleBigDecimalScore valueOf(BigDecimal score) {
         return new SimpleBigDecimalScore(0, score);
     }
 
@@ -104,13 +88,7 @@ public final class SimpleBigDecimalScore extends AbstractScore<SimpleBigDecimalS
     // ************************************************************************
 
     @Override
-    public SimpleBigDecimalScore toInitializedScore() {
-        return initScore == 0 ? this : new SimpleBigDecimalScore(0, score);
-    }
-
-    @Override
     public SimpleBigDecimalScore withInitScore(int newInitScore) {
-        assertNoInitScore();
         return new SimpleBigDecimalScore(newInitScore, score);
     }
 
@@ -169,6 +147,11 @@ public final class SimpleBigDecimalScore extends AbstractScore<SimpleBigDecimalS
     }
 
     @Override
+    public boolean isFeasible() {
+        return initScore >= 0;
+    }
+
+    @Override
     public Number[] toLevelNumbers() {
         return new Number[] { score };
     }
@@ -208,11 +191,6 @@ public final class SimpleBigDecimalScore extends AbstractScore<SimpleBigDecimalS
     @Override
     public String toString() {
         return getInitPrefix() + score;
-    }
-
-    @Override
-    public boolean isCompatibleArithmeticArgument(Score otherScore) {
-        return otherScore instanceof SimpleBigDecimalScore;
     }
 
 }

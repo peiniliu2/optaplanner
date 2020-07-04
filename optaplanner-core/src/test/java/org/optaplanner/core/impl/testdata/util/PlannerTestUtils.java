@@ -21,7 +21,6 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,7 +37,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.mockito.AdditionalAnswers;
 import org.optaplanner.core.api.score.buildin.simple.SimpleScore;
 import org.optaplanner.core.api.solver.SolverFactory;
@@ -52,7 +50,6 @@ import org.optaplanner.core.config.solver.termination.TerminationConfig;
 import org.optaplanner.core.impl.domain.solution.descriptor.SolutionDescriptor;
 import org.optaplanner.core.impl.score.DummySimpleScoreEasyScoreCalculator;
 import org.optaplanner.core.impl.score.director.InnerScoreDirector;
-import org.optaplanner.core.impl.score.director.easy.EasyScoreCalculator;
 import org.optaplanner.core.impl.score.director.easy.EasyScoreDirectorFactory;
 import org.optaplanner.core.impl.score.trend.InitializingScoreTrend;
 import org.optaplanner.core.impl.testdata.domain.TestdataEntity;
@@ -137,7 +134,7 @@ public class PlannerTestUtils {
     public static <Solution_> InnerScoreDirector<Solution_> mockScoreDirector(
             SolutionDescriptor<Solution_> solutionDescriptor) {
         EasyScoreDirectorFactory<Solution_> scoreDirectorFactory = new EasyScoreDirectorFactory<>(solutionDescriptor,
-                (EasyScoreCalculator<Solution_>) (solution_) -> SimpleScore.of(0));
+                (solution_) -> SimpleScore.of(0));
         scoreDirectorFactory.setInitializingScoreTrend(
                 InitializingScoreTrend.buildUniformTrend(InitializingScoreTrendLevel.ONLY_DOWN, 1));
         return mock(InnerScoreDirector.class,
@@ -167,17 +164,7 @@ public class PlannerTestUtils {
     // Serialization methods
     // ************************************************************************
 
-    public static <T> void serializeAndDeserializeWithAll(T input, Consumer<T> outputAsserter) {
-        outputAsserter.accept(serializeAndDeserializeWithJavaSerialization(input));
-        outputAsserter.accept(serializeAndDeserializeWithXStream(input));
-    }
-
-    public static <T> T serializeAndDeserializeWithJavaSerialization(T input) {
-        byte[] bytes = SerializationUtils.serialize((Serializable) input);
-        return (T) SerializationUtils.deserialize(bytes);
-    }
-
-    public static <T> T serializeAndDeserializeWithXStream(T input) {
+    public static <T> void serializeAndDeserializeWithXStream(T input, Consumer<T> outputAsserter) {
         XStream xStream = new XStream();
         xStream.setMode(XStream.ID_REFERENCES);
         if (input != null) {
@@ -186,7 +173,7 @@ public class PlannerTestUtils {
         XStream.setupDefaultSecurity(xStream);
         xStream.addPermission(new AnyTypePermission());
         String xmlString = xStream.toXML(input);
-        return (T) xStream.fromXML(xmlString);
+        outputAsserter.accept((T) xStream.fromXML(xmlString));
     }
 
     // ************************************************************************
